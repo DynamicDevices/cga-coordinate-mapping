@@ -413,7 +413,9 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 ### ⚠️ CRITICAL: CI Configuration Stability
 
-**DO NOT MODIFY THE CI WORKFLOW WITHOUT EXTENSIVE TESTING**
+**🚨 DO NOT CHANGE THE CI WORKFLOW - IT IS WORKING CORRECTLY 🚨**
+
+**The CI is currently working and all tests pass. Any changes to `.github/workflows/ci.yml` risk breaking the build pipeline. Only modify if absolutely necessary and after extensive local testing.**
 
 The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and tested. The current working configuration uses:
 
@@ -437,6 +439,13 @@ The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and t
 - Review git history for previous working configurations
 
 **Current stable configuration:** Commit 2b78f6b (2025-11-14)
+
+**⚠️ IMPORTANT: This CI configuration is working correctly. DO NOT modify it unless there is a critical need. The CI has been broken multiple times in the past by unnecessary changes. If you must modify it:**
+1. Test locally with the exact same commands first
+2. Verify all 92 tests pass locally
+3. Test both linux-arm64 and linux-x64 builds locally
+4. Only then commit and push
+5. Monitor the CI run closely after pushing
 
 ### Target Platform
 - **Primary**: Linux ARM64 (embedded systems)
