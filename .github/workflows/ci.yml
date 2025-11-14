@@ -36,13 +36,10 @@ jobs:
         # This prevents issues with shared obj directory between different runtime builds
         rm -rf obj bin publish
         
-    - name: Build and test
+    - name: Test
       run: |
-        # Build main project with runtime - this creates runtime-specific binary
-        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
-        
-        # Build and test in one step - dotnet test will restore and build test project correctly
-        # This avoids the issue where main project restore overwrites shared assets
+        # Just run tests - dotnet test will build both projects as needed
+        # The test project depends on the main project, so both get built correctly
         dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --verbosity normal
       continue-on-error: false
       
