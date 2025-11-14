@@ -30,6 +30,12 @@ jobs:
       id: git
       run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       
+    - name: Clean build artifacts
+      run: |
+        # Clean obj and bin directories to ensure each architecture build starts fresh
+        # This prevents issues with shared obj directory between different runtime builds
+        rm -rf obj bin publish
+        
     - name: Build and test
       run: |
         # CRITICAL: Restore solution WITHOUT runtime first - this restores ALL projects including test project
