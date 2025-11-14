@@ -40,7 +40,7 @@ jobs:
       run: dotnet restore tests/InstDotNet.Tests.csproj
       
     - name: Build Tests
-      run: dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
+      run: dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }}
       
     - name: Run Tests
       run: dotnet test tests/InstDotNet.Tests.csproj --no-build -c Release --verbosity normal
