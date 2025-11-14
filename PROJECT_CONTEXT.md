@@ -124,9 +124,6 @@
   - Supports environment variable overrides
   - Validates and binds configuration to strongly-typed models
   - Provides defaults if configuration files are missing
-- **Purpose**: Version information display
-- **Data**: Semantic version, build date, git commit hash
-- **Source**: Assembly metadata injected at build time
 
 #### 9. UwbParser.py (root directory)
 - **Purpose**: Preprocessing tool for edge data
@@ -144,7 +141,7 @@ graph TB
         JSON[UWB Network JSON<br/>Relative coordinates + distances]
     end
     
-    subgraph "Application Core (src/InstDotNet/)"
+    subgraph "Application Core (src/)"
         Program[Program.cs<br/>Entry Point]
         MQTTCtrl[MQTTControl.cs<br/>MQTT Client]
         UWBManager[UWBManager.cs<br/>Network Manager]
@@ -153,10 +150,11 @@ graph TB
         Vector[VectorExtensions.cs<br/>Math Utilities]
         Logger[Logger.cs<br/>AppLogger<br/>Logging Framework]
         Version[VersionInfo.cs<br/>Version Display]
+        Config[AppConfig.cs<br/>Configuration Loader]
     end
     
     subgraph "Reference Data"
-        Beacons[Hardcoded Beacons<br/>B5A4, B57A, B98A<br/>GPS Coordinates]
+        Beacons[Configured Beacons<br/>From appsettings.json<br/>GPS Coordinates]
     end
     
     subgraph "Processing Pipeline"
