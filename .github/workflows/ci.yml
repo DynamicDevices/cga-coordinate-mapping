@@ -32,22 +32,17 @@ jobs:
       
     - name: Build and test
       run: |
-        # CRITICAL: Restore test project FIRST (without runtime) - this gets xunit packages into assets file
-        # The test project doesn't need a runtime identifier, so restore it first
-        dotnet restore tests/InstDotNet.Tests.csproj
+        # CRITICAL: Restore solution WITHOUT runtime first - this restores ALL projects including test project
+        # This ensures xunit packages are in the assets file for the test project
+        dotnet restore InstDotNet.sln
         
-        # CRITICAL: Restore main project WITH runtime - this ADDS runtime target to existing assets file
-        # When both projects share the same obj directory, restoring the second project
-        # merges its dependencies into the existing assets file (doesn't overwrite)
-        # NOTE: Test project build will restore itself if needed to ensure xunit is available
-        dotnet restore src/InstDotNet.csproj -r ${{ matrix.runtime }}
+        # Build main project WITH runtime - this will implicitly restore with runtime if needed
+        # The build process will handle the runtime-specific restore without overwriting
+        # the solution-level assets that include test project dependencies
+        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
         
-        # Build main project - use --no-restore since we already restored
-        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
-        
-        # Build test project - DON'T use --no-restore, let it restore itself if needed
-        # This ensures xunit packages are available even if main project restore overwrote assets
-        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }}
+        # Build test project - it should use the assets from solution restore
+        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
         # Run tests - use --no-build to use pre-built test project
         dotnet test tests/InstDotNet.Tests.csproj -c Release --no-build --verbosity normal
