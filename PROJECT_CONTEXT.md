@@ -62,15 +62,14 @@
 
 ### Key Components
 
-#### 1. src/InstDotNet/MQTTControl.cs
+#### 1. src/MQTTControl.cs
 - **Purpose**: MQTT client for bidirectional communication
 - **Input**: Receives UWB network JSON from topic `DotnetMQTT/Test/in`
 - **Output**: Publishes updated network with GPS coordinates to topic `DotnetMQTT/Test/out`
-- **Configuration**: 
-  - Server: `mqtt.dynamicdevices.co.uk:1883`
-  - Client ID: `clientId-UwbManager-001`
+- **Configuration**: Loaded from `appsettings.json` (configurable server, port, topics, credentials)
+- **Features**: Automatic retry logic with exponential backoff, auto-reconnection on disconnect
 
-#### 2. src/InstDotNet/UWBManager.cs
+#### 2. src/UWBManager.cs
 - **Purpose**: Manages UWB network lifecycle and update pipeline
 - **Responsibilities**:
   - Parse incoming MQTT messages into network structure
@@ -80,7 +79,7 @@
 - **Thread Safety**: Re-entrancy protection via `isUpdating` flag to prevent concurrent updates
 - **Error Handling**: Null checks before processing network data
 
-#### 3. src/InstDotNet/UWB2GPSConverter.cs
+#### 3. src/UWB2GPSConverter.cs
 - **Purpose**: Core algorithm implementation
 - **Algorithms**:
   - **3D Trilateration**: Calculates positions from 3+ known reference points
@@ -90,7 +89,7 @@
 - **Edge Handling**: `TryGetEndFromEdge` correctly handles both `end0` and `end1` edge endpoints
 - **Requirements**: Minimum 3 beacons with `positionKnown: true` and valid GPS coordinates
 
-#### 4. src/InstDotNet/WGS84Converter.cs
+#### 4. src/WGS84Converter.cs
 - **Purpose**: Geodetic coordinate transformations
 - **Transformations**:
   - Local 3D coordinates → ECEF (Earth-Centered, Earth-Fixed)
@@ -99,7 +98,7 @@
   - Unity coordinate system conversions
 - **Reference**: Based on WGS84 ellipsoid constants (a=6378.137 km, f=1/298.257223563)
 
-#### 5. src/InstDotNet/VectorExtensions.cs
+#### 5. src/VectorExtensions.cs
 - **Purpose**: Vector math utilities
 - **Operations**: Normalization, cross product, dot product, distance calculations
 
@@ -389,8 +388,9 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - `TestNodes.json`: Sample test data
 - `.github/workflows/ci.yml`: CI/CD pipeline
 - `UwbParser.py`: Data preprocessing tool
-- `src/InstDotNet/`: Main application source code
-- `tests/InstDotNet.Tests/`: Unit test project
+- `src/`: Main application source code (flat structure)
+- `tests/`: Unit test project (flat structure)
+- `Directory.Build.props`: Centralized build configuration (outputs to root bin/obj)
 
 ## Notes
 
