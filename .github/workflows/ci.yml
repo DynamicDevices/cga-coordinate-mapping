@@ -30,11 +30,14 @@ jobs:
       id: git
       run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       
-    - name: Restore all dependencies
-      run: dotnet restore
+    - name: Restore main project dependencies
+      run: dotnet restore src/InstDotNet.csproj -r ${{ matrix.runtime }}
       
     - name: Build (warnings treated as errors)
       run: dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
+      
+    - name: Restore all dependencies
+      run: dotnet restore
       
     - name: Build Tests
       run: dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
