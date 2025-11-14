@@ -3,6 +3,7 @@
 [![CI Build and Publish](https://github.com/DynamicDevices/cga-coordinate-mapping/actions/workflows/ci.yml/badge.svg)](https://github.com/DynamicDevices/cga-coordinate-mapping/actions/workflows/ci.yml)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Platform](https://img.shields.io/badge/platform-linux--arm64-lightgrey)](https://github.com/DynamicDevices/cga-coordinate-mapping)
+[![Code Coverage](https://img.shields.io/badge/coverage-58%25-green)](https://github.com/DynamicDevices/cga-coordinate-mapping/actions)
 
 A .NET 8.0 application that converts Ultra-Wideband (UWB) sensor network data into GPS coordinates using trilateration algorithms. Designed for real-time position tracking and emergency response scenarios.
 

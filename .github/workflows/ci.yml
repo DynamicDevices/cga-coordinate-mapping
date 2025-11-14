@@ -29,9 +29,21 @@ jobs:
     - name: Clean build artifacts
       run: rm -rf obj bin
       
-    - name: Run Tests
-      run: dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --verbosity normal
+    - name: Run Tests with Coverage
+      run: dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
       continue-on-error: false
+      
+    - name: Generate Coverage Report
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool || true
+        reportgenerator -reports:"./coverage/**/coverage.cobertura.xml" -targetdir:"./coverage/report" -reporttypes:"Html;Badges"
+      
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/report
+        retention-days: 30
 
   build:
     name: Build Native Binaries
