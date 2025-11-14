@@ -1,0 +1,525 @@
+{
+    "uwbs": [
+        {
+            "id": "B5A4",
+            "triageStatus": 5,
+            "position": {
+                "x": -8.7171630859375,
+                "y": 0.0,
+                "z": 48.637733459472659
+            },
+            "latLonAlt": [
+                53.48514639104522,
+                -2.191785053920114,
+                0.00019015442376257852
+            ],
+            "positionKnown": true,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B5A4",
+                    "end1": "B57A",
+                    "distance": 49.8287353515625
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "B98A",
+                    "distance": 101.71668243408203
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "B4F1",
+                    "distance": 85.26277160644531
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "B4D3",
+                    "distance": 20.595626831054689
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "B2E6",
+                    "distance": 54.767120361328128
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "BD7C",
+                    "distance": 12.511574745178223
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "B1F3",
+                    "distance": 93.410400390625
+                },
+                {
+                    "end0": "B5A4",
+                    "end1": "BA8B",
+                    "distance": 77.95249938964844
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B57A",
+            "triageStatus": 5,
+            "position": {
+                "x": 27.028667449951173,
+                "y": 0.0,
+                "z": 13.922630310058594
+            },
+            "latLonAlt": [
+                53.48545891792991,
+                -2.19232588314793,
+                0.00007199832907645032
+            ],
+            "positionKnown": true,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B57A",
+                    "end1": "B5A4",
+                    "distance": 49.8287353515625
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "B98A",
+                    "distance": 59.53336715698242
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "B4F1",
+                    "distance": 36.886756896972659
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "B4D3",
+                    "distance": 52.97575378417969
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "B2E6",
+                    "distance": 61.272769927978519
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "BD7C",
+                    "distance": 48.89401626586914
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "B1F3",
+                    "distance": 74.01773071289063
+                },
+                {
+                    "end0": "B57A",
+                    "end1": "BA8B",
+                    "distance": 60.4875373840332
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B98A",
+            "triageStatus": 5,
+            "position": {
+                "x": 29.68435287475586,
+                "y": 0.0,
+                "z": -45.551475524902347
+            },
+            "latLonAlt": [
+                53.485994341662628,
+                -2.192366069038485,
+                0.00023282336769625545
+            ],
+            "positionKnown": true,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B98A",
+                    "end1": "B5A4",
+                    "distance": 101.71668243408203
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "B57A",
+                    "distance": 59.53336715698242
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "B4F1",
+                    "distance": 28.87401008605957
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "B4D3",
+                    "distance": 94.35607147216797
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "B2E6",
+                    "distance": 76.64266967773438
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "BD7C",
+                    "distance": 95.06214141845703
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "B1F3",
+                    "distance": 48.46424865722656
+                },
+                {
+                    "end0": "B98A",
+                    "end1": "BA8B",
+                    "distance": 48.189598083496097
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B4F1",
+            "triageStatus": 1,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B4F1",
+                    "end1": "B5A4",
+                    "distance": 85.26277160644531
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "B57A",
+                    "distance": 36.886756896972659
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "B98A",
+                    "distance": 28.87401008605957
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "B4D3",
+                    "distance": 83.50990295410156
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "B2E6",
+                    "distance": 77.20219421386719
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "BD7C",
+                    "distance": 81.71930694580078
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "B1F3",
+                    "distance": 65.90962982177735
+                },
+                {
+                    "end0": "B4F1",
+                    "end1": "BA8B",
+                    "distance": 58.714111328125
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B4D3",
+            "triageStatus": 4,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B4D3",
+                    "end1": "B5A4",
+                    "distance": 20.595626831054689
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "B57A",
+                    "distance": 52.97575378417969
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "B98A",
+                    "distance": 94.35607147216797
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "B4F1",
+                    "distance": 83.50990295410156
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "B2E6",
+                    "distance": 35.37354278564453
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "BD7C",
+                    "distance": 8.442853927612305
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "B1F3",
+                    "distance": 77.49004364013672
+                },
+                {
+                    "end0": "B4D3",
+                    "end1": "BA8B",
+                    "distance": 62.55416488647461
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B2E6",
+            "triageStatus": 0,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B2E6",
+                    "end1": "B5A4",
+                    "distance": 54.767120361328128
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "B57A",
+                    "distance": 61.272769927978519
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "B98A",
+                    "distance": 76.64266967773438
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "B4F1",
+                    "distance": 77.20219421386719
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "B4D3",
+                    "distance": 35.37354278564453
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "BD7C",
+                    "distance": 42.37441635131836
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "B1F3",
+                    "distance": 45.629425048828128
+                },
+                {
+                    "end0": "B2E6",
+                    "end1": "BA8B",
+                    "distance": 32.960697174072269
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B6F9",
+            "triageStatus": 3,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "BD7C",
+            "triageStatus": 1,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "BD7C",
+                    "end1": "B5A4",
+                    "distance": 12.511574745178223
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "B57A",
+                    "distance": 48.89401626586914
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "B98A",
+                    "distance": 95.06214141845703
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "B4F1",
+                    "distance": 81.71930694580078
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "B4D3",
+                    "distance": 8.442853927612305
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "B2E6",
+                    "distance": 42.37441635131836
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "B1F3",
+                    "distance": 82.40025329589844
+                },
+                {
+                    "end0": "BD7C",
+                    "end1": "BA8B",
+                    "distance": 67.11567687988281
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "B1F3",
+            "triageStatus": 0,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "B1F3",
+                    "end1": "B5A4",
+                    "distance": 93.410400390625
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "B57A",
+                    "distance": 74.01773071289063
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "B98A",
+                    "distance": 48.46424865722656
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "B4F1",
+                    "distance": 65.90962982177735
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "B4D3",
+                    "distance": 77.49004364013672
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "B2E6",
+                    "distance": 45.629425048828128
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "BD7C",
+                    "distance": 82.40025329589844
+                },
+                {
+                    "end0": "B1F3",
+                    "end1": "BA8B",
+                    "distance": 15.548240661621094
+                }
+            ],
+            "positionAccuracy": 0.0
+        },
+        {
+            "id": "BA8B",
+            "triageStatus": 0,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "latLonAlt": [],
+            "positionKnown": false,
+            "lastPositionUpdateTime": 0.0,
+            "edges": [
+                {
+                    "end0": "BA8B",
+                    "end1": "B5A4",
+                    "distance": 77.95249938964844
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "B57A",
+                    "distance": 60.4875373840332
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "B98A",
+                    "distance": 48.189598083496097
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "B4F1",
+                    "distance": 58.714111328125
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "B4D3",
+                    "distance": 62.55416488647461
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "B2E6",
+                    "distance": 32.960697174072269
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "BD7C",
+                    "distance": 67.11567687988281
+                },
+                {
+                    "end0": "BA8B",
+                    "end1": "B1F3",
+                    "distance": 15.548240661621094
+                }
+            ],
+            "positionAccuracy": 0.0
+        }
+    ]
+}

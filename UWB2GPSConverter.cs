@@ -1,0 +1,287 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Text.Json.Serialization;
+
+public class UWB2GPSConverter
+{
+    [System.Serializable]
+    public class UWB
+    {
+        public string id;
+        public TriageStatus triageStatus;
+        public enum TriageStatus { unknown, responder, unconscious, injured, deceased, beacon }
+        [JsonIgnore]
+        public Vector3 position;
+        public double[] latLonAlt;
+        public bool positionKnown;
+        public float lastPositionUpdateTime;
+        public List<Edge> edges;
+        public float positionAccuracy;
+
+        public UWB() { edges = new List<Edge>(); }  // ensures not null if JSON omits it
+        public UWB(string id)
+        {
+            this.id = id;
+            edges = new List<Edge>();
+        }
+    }
+
+    [System.Serializable]
+    public class Edge
+    {
+        public string end0;
+        public string end1;
+        public float distance;
+
+        // For System.Text.Json
+        public Edge() { }
+
+        // Convenience ctor you already had
+        public Edge(UWB end0, UWB end1, float distance)
+        {
+            this.end0 = end0.id;
+            this.end1 = end1.id;
+            this.distance = distance;
+        }
+    }
+    [System.Serializable]
+    public class Network
+    {
+        public UWB[] uwbs;
+        public Network() { }
+        public Network(UWB[] uwbs) => this.uwbs = uwbs;
+    }
+
+
+
+
+
+    public static void ConvertUWBToPositions(Network network, bool refine)
+    {
+        float timeNow = (float)DateTime.UtcNow.TimeOfDay.TotalSeconds;
+        UWB[] allNodes = network.uwbs;
+
+        // First pass - get initial positions using trilateration
+        // 1. Find all unique nodes in the network
+        int totalNodes = allNodes.Length;
+        int totalNodesUpdated = 0;
+
+        // 2. Find the 3 nodes with positionKnown == true
+        HashSet<UWB> knownNodes = new HashSet<UWB>();
+        foreach (UWB node in allNodes)
+        {
+            if (node.positionKnown)
+            {
+                knownNodes.Add(node);
+                if (knownNodes.Count == 3) break;
+            }
+            node.lastPositionUpdateTime = 0;
+        }
+
+        if (knownNodes.Count < 3)
+        {
+            Console.Error.WriteLine("Not enough known nodes for triangulation. You need 3 beacons with positionKnown = true and lat/lon/alts set");
+            return;
+        }
+
+        // 3. Iteratively update positions for unknown nodes
+        bool progress = true;
+        while (progress)
+        {
+            progress = false;
+            foreach (UWB node in allNodes)
+            {
+                if (node.positionKnown || node.lastPositionUpdateTime == timeNow) continue;
+
+                // If the node is not known, try to update its position
+                UWB[] triangulationNodes = new UWB[3];
+                float[] distances = new float[3];
+
+                int index = 0;
+                foreach (Edge edge in node.edges)
+                {
+                    if (TryGetEndFromEdge(edge, network, out UWB end))
+                    {
+                        if (end.positionKnown || end.lastPositionUpdateTime == timeNow)
+                        {
+                            triangulationNodes[index] = end;
+                            distances[index] = edge.distance;
+                            index++;
+                            if (index >= 3) break;
+                        }
+                    }
+                }
+
+                if (index < 3)
+                {
+                    //Debug.Log($"Not enough triangulation nodes yet for node {node.id} - skip over this time");
+                    continue;
+                }
+                //Get latLonAlt ref point from the first known node
+                double refPointLat = triangulationNodes[0].latLonAlt[0];
+                double refPointLon = triangulationNodes[0].latLonAlt[1];
+                double refPointAlt = triangulationNodes[0].latLonAlt[2];
+                Vector3 refPos = triangulationNodes[0].position;
+
+                // Use the first three for triangulation
+                Vector3 p0 = triangulationNodes[0].position;
+                Vector3 p1 = triangulationNodes[1].position;
+                Vector3 p2 = triangulationNodes[2].position;
+                float r0 = distances[0];
+                float r1 = distances[1];
+                float r2 = distances[2];
+
+                // Trilateration in 3D
+                Vector3 ex = (p1 - p0).Normalized();
+                float i = Vector3Extensions.Dot(ex, p2 - p0);
+                Vector3 ey = (p2 - p0 - i * ex).Normalized();
+                Vector3 ez = Vector3Extensions.Cross(ex, ey);
+
+                float d = Vector3Extensions.Distance(p0, p1);
+                float j = Vector3Extensions.Dot(ey, p2 - p0);
+
+                if (Math.Abs(j) < 1e-6f)
+                {
+                    Console.Error.WriteLine($"Cannot triangulate node {node.id} with triangulation nodes {triangulationNodes[0].id}, {triangulationNodes[1].id} and {triangulationNodes[2].id} : the nodes are collinear or too close.");
+                    continue;
+                }
+
+                float x = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
+                float y = (r0 * r0 - r2 * r2 + i * i + j * j - 2 * i * x) / (2 * j);
+
+                float zSquared = r0 * r0 - x * x - y * y;
+                float z = zSquared > 0 ? (float)Math.Sqrt(zSquared) : 0;
+
+                node.position = p0 + x * ex + y * ey + z * ez;
+                node.latLonAlt = WGS84Converter.LatLonAltEstimate(refPointLat, refPointLon, refPointAlt, refPos, node.position);
+                //Debug.Log($"Position triangulated for node {node.id} to {node.position}\n");
+                node.lastPositionUpdateTime = timeNow;
+                totalNodesUpdated++;
+                progress = true;
+            }
+        }
+
+        // Second pass - iterative refinement
+        if (refine)
+        {
+            const int MAX_ITERATIONS = 10;
+            const float LEARNING_RATE = 0.1f;
+            for (int iter = 0; iter < MAX_ITERATIONS; iter++)
+            {
+                bool improved = false;
+                foreach (UWB node in allNodes)
+                {
+                    if (node.positionKnown) continue;
+
+                    Vector3 originalPos = node.position;
+                    Vector3 gradient = Vector3Extensions.Zero;
+
+                    // Calculate gradient based on distance constraints
+                    foreach (Edge edge in node.edges)
+                    {
+                        UWB neighbour = null;
+                        foreach (UWB other in allNodes)
+                        {
+                            if (other.id == edge.end1)
+                            {
+                                neighbour = other;
+                            }
+                        }
+
+                        if (neighbour == null || !neighbour.lastPositionUpdateTime.Equals(timeNow)) continue;
+
+                        float currentDist = Vector3.Distance(node.position, neighbour.position);
+                        float error = currentDist - edge.distance;
+
+                        Vector3 direction = (node.position - neighbour.position).Normalized();
+                        gradient += direction * error;
+                    }
+
+                    // Apply gradient descent update
+                    Vector3 newPos = node.position - gradient * LEARNING_RATE;
+
+                    // Check if new position reduces total error
+                    float oldError = NodeError(node, network);
+                    node.position = newPos;
+                    float newError = NodeError(node, network);
+
+                    if (newError < oldError)
+                    {
+                        improved = true;
+                        node.lastPositionUpdateTime = timeNow;
+                        //Debug.Log($"Position improved for node {node.id} to {node.position}\n");
+                    }
+                    else
+                    {
+                        node.position = originalPos;
+                    }
+                }
+
+                if (!improved) break;
+            }
+        }
+
+        float totalError = 0;
+        float total = 0;
+        foreach (UWB node in network.uwbs)
+        {
+            totalError += NodeError(node, network);
+            total++;
+        }
+        total *= 0.5f;
+
+        Console.WriteLine($"UWB to GPS conversion completed. Updated {totalNodesUpdated}/{totalNodes} positions. Average error: {totalError / total}m.");
+        if (totalNodesUpdated + 3 < totalNodes)
+        {
+            string m = "Could not triangulate nodes: ";
+            foreach (UWB node in allNodes)
+            {
+                if (!node.positionKnown && node.lastPositionUpdateTime < timeNow)
+                {
+                    m += $"{node.id}, ";
+                }
+            }
+            Console.WriteLine(m);
+        }
+
+    }
+
+    private static float NodeError(UWB node, Network network)
+    {
+        float totalError = 0;
+        foreach (Edge edge in node.edges)
+        {
+            if (TryGetEndFromEdge(edge, network, out UWB end))
+            {
+                totalError += EdgeErrorSquared(node, end, edge.distance);
+            }
+        }
+        int numEdges = node.edges.Count;
+        node.positionAccuracy = numEdges == 0 ? -1f : (float)Math.Sqrt(totalError / node.edges.Count);
+        return totalError;
+    }
+
+    private static float EdgeErrorSquared(UWB end0, UWB end1, float edgeDistance)
+    {
+        float currentDist = Vector3Extensions.Distance(end0.position, end1.position);
+        float error = Math.Abs(currentDist - edgeDistance);
+        return error * error; // Squared error
+    }
+
+    public static bool TryGetEndFromEdge(Edge edge, Network network, out UWB end)
+    {
+        end = null;
+        if (network == null || network.uwbs == null) return false;
+
+        foreach (UWB node in network.uwbs)
+        {
+            if (node.id == edge.end1)
+            {
+                end = node;
+                return true;
+            }
+        }
+        return false;
+    }
+}

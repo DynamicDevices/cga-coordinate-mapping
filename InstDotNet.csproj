@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework> <!-- This was the missing line -->
+
+    <AssemblyName>InstDotNet</AssemblyName>
+    <RootNamespace>InstDotNet</RootNamespace>
+
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- You can try 'full' for maximum size reduction -->
+    <TrimMode>partial</TrimMode>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+
+
+</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MQTTnet" Version="5.0.1.1416" />
+  </ItemGroup>
+
+</Project>
