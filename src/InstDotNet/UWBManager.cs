@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using InstDotNet;
 
 public class UWBManager
 {
@@ -15,9 +16,11 @@ public class UWBManager
     private static bool isUpdating = false;
     private static JsonSerializerOptions? jsonOptions;
     private static ILogger? _logger;
+    private static AppConfig? _config;
 
-    public static void Initialise()
+    public static void Initialise(AppConfig? config = null)
     {
+        _config = config;
         _logger = AppLogger.GetLogger<UWBManager>();
         updateNetworkTrigger = false;
         isUpdating = false;
@@ -29,6 +32,14 @@ public class UWBManager
         };
         MQTTControl.OnMessageReceived -= UpdateUwbsFromMessage;
         MQTTControl.OnMessageReceived += UpdateUwbsFromMessage;
+        
+        // Initialize beacons from configuration
+        if (_config?.Beacons != null && _config.Beacons.Count > 0)
+        {
+            UWB2GPSConverter.InitializeBeacons(_config.Beacons);
+            _logger?.LogInformation("Initialized {Count} beacons from configuration", _config.Beacons.Count);
+        }
+        
         // network will be set when message received
     }
 
@@ -83,7 +94,8 @@ public class UWBManager
             return;
         }
 
-        UWB2GPSConverter.ConvertUWBToPositions(network, true);
+        bool refine = _config?.Algorithm.RefinementEnabled ?? true;
+        UWB2GPSConverter.ConvertUWBToPositions(network, refine, _config?.Algorithm);
 
         if (sendUwbsList == null)
         {

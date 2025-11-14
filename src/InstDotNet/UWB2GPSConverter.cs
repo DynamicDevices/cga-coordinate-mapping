@@ -1,13 +1,16 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using InstDotNet;
 
 public class UWB2GPSConverter
 {
     private static ILogger? _logger;
+    private static Dictionary<string, BeaconConfig>? _configuredBeacons;
 
     [System.Serializable]
 #nullable disable  // JSON deserialization classes
@@ -63,7 +66,60 @@ public class UWB2GPSConverter
 
 
 
-    public static void ConvertUWBToPositions(Network network, bool refine)
+    /// <summary>
+    /// Initialize beacons from configuration. These beacons will be applied to incoming network data.
+    /// </summary>
+    public static void InitializeBeacons(List<BeaconConfig> beacons)
+    {
+        _configuredBeacons = new Dictionary<string, BeaconConfig>();
+        foreach (var beacon in beacons)
+        {
+            if (!string.IsNullOrEmpty(beacon.Id))
+            {
+                _configuredBeacons[beacon.Id] = beacon;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Apply configured beacon positions to network nodes that match beacon IDs.
+    /// </summary>
+    private static void ApplyConfiguredBeacons(Network network)
+    {
+        if (_configuredBeacons == null || network.uwbs == null)
+        {
+            return;
+        }
+
+        foreach (var node in network.uwbs)
+        {
+            if (node == null || string.IsNullOrEmpty(node.id))
+            {
+                continue;
+            }
+
+            if (_configuredBeacons.TryGetValue(node.id, out var beacon))
+            {
+                // Set as known position
+                node.positionKnown = true;
+                node.latLonAlt = new double[] { beacon.Latitude, beacon.Longitude, beacon.Altitude };
+                
+                // Convert GPS to local 3D position using first beacon as reference
+                // For now, we'll use the first configured beacon as reference
+                if (network.uwbs.Length > 0)
+                {
+                    var firstBeacon = _configuredBeacons.Values.First();
+                    var refPoint = new Vector3(0, 0, 0); // Reference point in Unity space
+                    node.position = WGS84Converter.LatLonAltkm2UnityPos(
+                        firstBeacon.Latitude, firstBeacon.Longitude, firstBeacon.Altitude / 1000.0,
+                        beacon.Latitude, beacon.Longitude, beacon.Altitude / 1000.0,
+                        refPoint);
+                }
+            }
+        }
+    }
+
+    public static void ConvertUWBToPositions(Network network, bool refine, AlgorithmConfig? algorithmConfig = null)
     {
         _logger ??= AppLogger.GetLogger<UWB2GPSConverter>();
 
@@ -72,6 +128,9 @@ public class UWB2GPSConverter
             _logger.LogError("ConvertUWBToPositions: network is null or empty.");
             return;
         }
+
+        // Apply configured beacons to network nodes
+        ApplyConfiguredBeacons(network);
 
         float timeNow = (float)DateTime.UtcNow.TimeOfDay.TotalSeconds;
         UWB[] allNodes = network.uwbs;
@@ -195,9 +254,9 @@ public class UWB2GPSConverter
         // Second pass - iterative refinement
         if (refine)
         {
-            const int MAX_ITERATIONS = 10;
-            const float LEARNING_RATE = 0.1f;
-            for (int iter = 0; iter < MAX_ITERATIONS; iter++)
+            int maxIterations = algorithmConfig?.MaxIterations ?? 10;
+            float learningRate = algorithmConfig?.LearningRate ?? 0.1f;
+            for (int iter = 0; iter < maxIterations; iter++)
             {
                 bool improved = false;
                 foreach (UWB node in allNodes)
@@ -223,7 +282,7 @@ public class UWB2GPSConverter
                     }
 
                     // Apply gradient descent update
-                    Vector3 newPos = node.position - gradient * LEARNING_RATE;
+                    Vector3 newPos = node.position - gradient * learningRate;
 
                     // Check if new position reduces total error
                     float oldError = NodeError(node, network, nodeMap);
