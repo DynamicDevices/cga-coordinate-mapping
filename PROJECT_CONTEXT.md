@@ -6,12 +6,20 @@
 
 **Status**: Active Development  
 **Last Updated**: 2025-11-14  
-**Version**: 1.1.0  
-**Latest Release**: [v1.1.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.1.0) (2025-11-14)  
+**Version**: 1.2.0  
+**Latest Release**: [v1.2.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.2.0) (2025-11-14)  
 **Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`  
 **License**: GPLv3 (see LICENSE file)
 
 ## Recent Updates (2025-11-14)
+
+### CI Workflow Restructured (2025-11-14)
+- ✅ **Simplified CI Structure**: Test job runs first, then build jobs run in parallel
+- ✅ **Stable CI Configuration**: Explicit restore before tests ensures xunit is available
+- ✅ **Reliable Build Pipeline**: All 92 tests pass consistently, both architectures build successfully
+- ⚠️ **CRITICAL**: CI configuration is now stable - DO NOT modify `.github/workflows/ci.yml` (see CI Configuration Stability section)
+
+## Previous Updates (2025-11-14)
 
 ### Major Features Added
 - ✅ **Logging Framework**: Replaced all `Console.WriteLine` with `Microsoft.Extensions.Logging`
@@ -413,55 +421,59 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 ### ⚠️ CRITICAL: CI Configuration Stability
 
-**🚨 DO NOT CHANGE THE CI WORKFLOW - IT IS WORKING CORRECTLY 🚨**
+**🚨🚨🚨 DO NOT MODIFY THE CI WORKFLOW - IT IS WORKING CORRECTLY 🚨🚨🚨**
 
-**The CI is currently working and all tests pass. Any changes to `.github/workflows/ci.yml` risk breaking the build pipeline. Only modify if absolutely necessary and after extensive local testing.**
+**The CI has been broken multiple times by unnecessary changes. The current configuration is stable and working. DO NOT change `.github/workflows/ci.yml` unless there is a critical bug that cannot be fixed any other way.**
 
-The CI workflow (`.github/workflows/ci.yml`) uses a carefully sequenced restore/build pattern to handle the shared `obj` directory issue. The current working configuration uses:
+**Current Working CI Configuration (2025-11-14):**
 
-1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Gets all packages including xunit
-2. **Build main project** (`dotnet build src/InstDotNet.csproj -r runtime`) - Builds with runtime, may restore again
-3. **Restore test project** (`dotnet restore tests/InstDotNet.Tests.csproj --force`) - **CRITICAL**: Ensures xunit is in assets file after main project restore may have overwritten it
-4. **Build test project** (`dotnet build tests/InstDotNet.Tests.csproj --no-restore`) - Uses packages from restore above
-5. **Run tests** (`dotnet test --no-build`) - Uses pre-built test project
+The CI workflow uses a **two-job structure** that is simple and reliable:
 
-**Why this is reliable:**
-- Solution restore gets all packages upfront
-- Main project build gets runtime-specific assets
-- **Explicit test project restore with --force ensures xunit is always in assets file** (this is the key fix)
-- Test build uses `--no-restore` to avoid overwriting assets
-- Test run uses `--no-build` to use pre-built project
-- All steps in one script block for atomic execution
-- Tested with both linux-arm64 and linux-x64
+1. **Test Job** (runs first):
+   - Clean `obj` and `bin` directories
+   - Restore test project: `dotnet restore tests/InstDotNet.Tests.csproj`
+     - This restores both the test project AND the main project (as a dependency)
+     - Ensures xunit is included in the shared `project.assets.json`
+   - Run tests: `dotnet test tests/InstDotNet.Tests.csproj --no-restore`
+     - Uses the restored dependencies, builds both projects, runs all 92 tests
 
-**Root Cause Analysis:**
+2. **Build Jobs** (run in parallel after tests pass):
+   - One job for `linux-arm64`, one for `linux-x64`
+   - Clean `obj`, `bin`, and `publish` directories
+   - Publish: `dotnet publish src/InstDotNet.csproj -r ${{ matrix.runtime }}`
+   - Create archives and upload artifacts
+
+**Why This Works:**
+- **Simple separation**: Tests run first, builds run after
+- **Explicit restore**: Restoring the test project ensures xunit is in the assets file
+- **No restore conflicts**: Test job and build jobs are separate, so no shared assets file conflicts
+- **Clean state**: Each job starts with a clean `obj` directory
+- **Tested and verified**: All 92 tests pass consistently
+
+**Root Cause of Previous Issues:**
 - Both projects share the same `obj` directory (via `Directory.Build.props`)
 - They share the same `project.assets.json` file
-- When main project restores with runtime, it also restores test project (via project reference), overwriting assets file
-- This can remove xunit packages from the assets file
-- **Solution**: Explicitly restore test project AFTER main project build to ensure xunit is always present
+- When restoring projects with different runtime identifiers, the assets file can be overwritten
+- This can remove xunit packages needed by the test project
+- **Solution**: Separate test job that restores explicitly, then build jobs that don't interfere
 
-**Before modifying CI:**
-- Test locally with the exact same commands
-- Verify all 92 tests pass
-- Test both linux-arm64 and linux-x64 builds locally
-- Review git history for previous working configurations
+**⚠️ CRITICAL WARNING - DO NOT CHANGE:**
+- **DO NOT** combine test and build steps in the same job
+- **DO NOT** remove the explicit restore step before tests
+- **DO NOT** try to optimize or simplify the workflow further
+- **DO NOT** add restore steps to the build jobs unless absolutely necessary
+- **DO NOT** change the order of steps
+- **DO NOT** modify the restore/build commands
 
-**Current stable configuration:** Commit (latest) - 5-step restore/build sequence
+**The CI has been broken repeatedly by "improvements" that seemed logical but caused failures. The current configuration is the result of extensive troubleshooting and is working correctly. Please respect this warning.**
 
-**Known Issue - Intermittent Test Failures:**
-- Tests may fail intermittently due to race conditions with static state
-- Static state includes: `AppLogger`, `MQTTControl.OnMessageReceived`, `UWB2GPSConverter._configuredBeacons`
-- **Fix applied**: Disabled parallel test execution (`xUnitDisableParallelTestExecution=true`) to ensure test isolation
-- All test classes that modify static state use `[Collection("LoggerTests")]` to run sequentially
-- If CI fails intermittently, check for test isolation issues first
-
-**⚠️ IMPORTANT: This CI configuration is working correctly. DO NOT modify it unless there is a critical need. The CI has been broken multiple times in the past by unnecessary changes. If you must modify it:**
+**If you absolutely must modify the CI:**
 1. Test locally with the exact same commands first
-2. Verify all 92 tests pass locally
-3. Test both linux-arm64 and linux-x64 builds locally
+2. Verify all 92 tests pass locally for both architectures
+3. Test the complete workflow: clean, restore, test, then build
 4. Only then commit and push
 5. Monitor the CI run closely after pushing
+6. Be prepared to revert immediately if it breaks
 
 ### Target Platform
 - **Primary**: Linux ARM64 (embedded systems)
@@ -538,7 +550,7 @@ The CI workflow (`.github/workflows/ci.yml`) uses a carefully sequenced restore/
 - **Performance**: Optimized neighbor lookups using Dictionary<string, UWB> for O(1) access instead of O(n) linear search
 - **Versioning**: Semantic versioning (MAJOR.MINOR.PATCH) with build metadata (date, git commit hash)
 - **License**: GPLv3 - See LICENSE file for full terms
-- **CI Stability**: ⚠️ **CRITICAL** - The CI workflow is working correctly. DO NOT modify `.github/workflows/ci.yml` unless absolutely necessary. See "CI Configuration Stability" section above for details. The CI has been broken multiple times by unnecessary changes - please respect this warning.
+- **CI Stability**: ⚠️⚠️⚠️ **CRITICAL** - The CI workflow is working correctly. **DO NOT modify `.github/workflows/ci.yml`**. The CI has been broken multiple times by unnecessary changes. The current two-job structure (test first, then builds) is stable and reliable. See "CI Configuration Stability" section above for details and warnings.
 
 ## Contact & Maintenance
 
