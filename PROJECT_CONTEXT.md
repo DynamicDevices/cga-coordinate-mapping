@@ -6,6 +6,8 @@
 
 **Status**: Active Development  
 **Last Updated**: 2025-11-14  
+**Version**: 1.1.0  
+**Latest Release**: [v1.1.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.1.0) (2025-11-14)  
 **Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`  
 **License**: GPLv3 (see LICENSE file)
 
@@ -30,12 +32,13 @@
   - Build date and git commit hash embedded in assembly
   - Version information displayed on startup
 - ✅ **CI/CD Enhancements**: 
-  - ✅ **CI Pipeline Fully Working**: All tests pass (57/57)
+  - ✅ **CI Pipeline Fully Working**: All tests pass (92/92)
+  - Simplified, reliable CI workflow with proper dependency restoration
   - Test execution in CI pipeline for both linux-arm64 and linux-x64
   - Linux x64 binary builds in addition to ARM64
   - Automated artifact publishing
-  - Proper dependency restoration for test projects
-  - Test isolation fixes (logger disposal handling)
+  - Fixed test framework configuration (explicit using statements)
+  - Stable, production-ready CI pipeline
 - ✅ **Configuration Management**: 
   - `appsettings.json` support for MQTT, application, and algorithm settings
   - Dynamic beacon configuration from configuration file (optional)
