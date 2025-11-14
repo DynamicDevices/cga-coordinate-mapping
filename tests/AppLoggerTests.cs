@@ -62,9 +62,6 @@ public class AppLoggerTests
     {
         // Arrange - Ensure clean state by disposing first
         AppLogger.Dispose();
-        
-        // Small delay to ensure disposal is complete (helps with test isolation)
-        System.Threading.Thread.Sleep(10);
 
         try
         {
@@ -77,7 +74,6 @@ public class AppLoggerTests
             Assert.False(logger1.IsEnabled(LogLevel.Trace), "Trace level should not be enabled when Debug is minimum");
 
             AppLogger.Dispose();
-            System.Threading.Thread.Sleep(10);
 
             // Act & Assert - Warning level
             AppLogger.Initialize(LogLevel.Warning);

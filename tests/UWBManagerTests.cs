@@ -17,7 +17,11 @@ public class UWBManagerTests
     [Fact]
     public void Initialise_WithConfig_InitializesBeacons()
     {
-        // Arrange - Clear MQTT handler first to avoid issues with event subscription
+        // Arrange - Ensure logger is initialized (may have been disposed by other tests)
+        AppLogger.Dispose();
+        AppLogger.Initialize(LogLevel.Debug);
+        
+        // Clear MQTT handler first to avoid issues with event subscription
         MQTTControl.OnMessageReceived = null;
         
         var config = new AppConfig
