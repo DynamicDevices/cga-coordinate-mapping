@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace InstDotNet.Tests;
 
+[Collection("LoggerTests")] // Run tests in this class sequentially to avoid logger disposal conflicts
 public class UWBManagerTests
 {
     public UWBManagerTests()
@@ -18,8 +19,12 @@ public class UWBManagerTests
     public void Initialise_WithConfig_InitializesBeacons()
     {
         // Arrange - Ensure logger is initialized (may have been disposed by other tests)
-        AppLogger.Dispose();
-        AppLogger.Initialize(LogLevel.Debug);
+        // Reinitialize to handle case where another test disposed it
+        if (AppLogger.Default == null || !AppLogger.Default.IsEnabled(LogLevel.Debug))
+        {
+            AppLogger.Dispose();
+            AppLogger.Initialize(LogLevel.Debug);
+        }
         
         // Clear MQTT handler first to avoid issues with event subscription
         MQTTControl.OnMessageReceived = null;
