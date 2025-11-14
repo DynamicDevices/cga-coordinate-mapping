@@ -126,6 +126,8 @@ public static class HardwareId
     /// Gets a sanitized version of the hardware ID suitable for use as an MQTT client ID.
     /// MQTT client IDs must be alphanumeric and can contain hyphens and underscores.
     /// </summary>
+    /// <param name="prefix">Optional prefix to prepend to the hardware ID (e.g., "UwbManager")</param>
+    /// <returns>A sanitized MQTT client ID string, truncated to 128 characters if necessary</returns>
     public static string GetMqttClientId(string? prefix = null)
     {
         var hardwareId = GetUniqueId();

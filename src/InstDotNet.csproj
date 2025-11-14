@@ -27,11 +27,7 @@
 
   <!-- Get Git Commit Hash -->
   <Target Name="GetGitCommitHash" BeforeTargets="BeforeBuild" Condition="'$(GitCommitHash)' == ''">
-    <Exec Command="git rev-parse --short HEAD" 
-          ContinueOnError="true" 
-          IgnoreExitCode="true"
-          ConsoleToMSBuild="true"
-          WorkingDirectory="$(MSBuildProjectDirectory)">
+    <Exec Command="git rev-parse --short HEAD" ContinueOnError="true" IgnoreExitCode="true" ConsoleToMSBuild="true" WorkingDirectory="$(MSBuildProjectDirectory)">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitHash" />
     </Exec>
     <PropertyGroup Condition="'$(GitCommitHash)' == ''">
@@ -52,6 +48,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.3.7.1207" />
   </ItemGroup>
 
   <ItemGroup>

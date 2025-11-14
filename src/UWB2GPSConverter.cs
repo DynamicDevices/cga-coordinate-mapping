@@ -69,6 +69,7 @@ public class UWB2GPSConverter
     /// <summary>
     /// Initialize beacons from configuration. These beacons will be applied to incoming network data.
     /// </summary>
+    /// <param name="beacons">List of beacon configurations with GPS coordinates</param>
     public static void InitializeBeacons(List<BeaconConfig> beacons)
     {
         _configuredBeacons = new Dictionary<string, BeaconConfig>();
@@ -211,7 +212,7 @@ public class UWB2GPSConverter
 
                 if (index < 3)
                 {
-                    //Debug.Log($"Not enough triangulation nodes yet for node {node.id} - skip over this time");
+                    // Not enough triangulation nodes yet - skip this node for now
                     continue;
                 }
                 //Get latLonAlt ref point from the first known node
@@ -257,7 +258,6 @@ public class UWB2GPSConverter
 
                 node.position = p0 + x * ex + y * ey + z * ez;
                 node.latLonAlt = WGS84Converter.LatLonAltEstimate(refPointLat, refPointLon, refPointAlt, refPos, node.position);
-                //Debug.Log($"Position triangulated for node {node.id} to {node.position}\n");
                 node.lastPositionUpdateTime = timeNow;
                 totalNodesUpdated++;
                 progress = true;
@@ -306,7 +306,6 @@ public class UWB2GPSConverter
                     {
                         improved = true;
                         node.lastPositionUpdateTime = timeNow;
-                        //Debug.Log($"Position improved for node {node.id} to {node.position}\n");
                     }
                     else
                     {
@@ -398,7 +397,14 @@ public class UWB2GPSConverter
         return true;
     }
 
-    // Legacy overload for backward compatibility (uses O(n) lookup)
+    /// <summary>
+    /// Legacy overload for backward compatibility (uses O(n) lookup).
+    /// Prefer the dictionary-based overload for better performance.
+    /// </summary>
+    /// <param name="edge">The edge to examine</param>
+    /// <param name="network">The network containing all nodes</param>
+    /// <param name="end">Output parameter for one of the edge's end nodes</param>
+    /// <returns>True if an end node was found, false otherwise</returns>
     public static bool TryGetEndFromEdge(Edge edge, Network network, out UWB? end)
     {
         end = null;

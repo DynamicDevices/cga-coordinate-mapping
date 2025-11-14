@@ -9,6 +9,7 @@ using MQTTnet.Packets;   // for v5 subscribe options if needed
 using MQTTnet.Protocol;  // QoS enums
 using Microsoft.Extensions.Logging;
 using InstDotNet;
+using System.Security.Cryptography.X509Certificates;
 
 public class MQTTControl
 {
@@ -20,7 +21,7 @@ public class MQTTControl
     public const int DEFAULT_SERVER_PORT = 1883;
     public const string DEFAULT_RECEIVE_MESSAGE_TOPIC = "DotnetMQTT/Test/in";
     public const string DEFAULT_SEND_MESSAGE_TOPIC = "DotnetMQTT/Test/out";
-    public const int DEFAULT_TIMEOUT_IN_SECONDS = 10; //not currently being used - need to for safety?
+    public const int DEFAULT_TIMEOUT_IN_SECONDS = 10;
     private static string _clientId = string.Empty;
     private static string _serverAddress = string.Empty;
     private static string _username = string.Empty;
@@ -144,7 +145,45 @@ public class MQTTControl
         var builder = new MqttClientOptionsBuilder()
             .WithClientId(_clientId)
             .WithTcpServer(_serverAddress, _port)
-            .WithCleanSession();
+            .WithCleanSession()
+            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds));
+
+        // Add TLS/SSL if configured
+        if (_config?.MQTT.UseTls == true)
+        {
+            // Configure TLS options for MQTTnet 5.0
+            var tlsOptions = new MqttClientTlsOptions
+            {
+                UseTls = true,
+                IgnoreCertificateChainErrors = _config.MQTT.AllowUntrustedCertificates,
+                IgnoreCertificateRevocationErrors = _config.MQTT.AllowUntrustedCertificates,
+                AllowUntrustedCertificates = _config.MQTT.AllowUntrustedCertificates
+            };
+
+            // Load client certificate if provided
+            if (!string.IsNullOrWhiteSpace(_config.MQTT.CertificatePath))
+            {
+                try
+                {
+                    var certBytes = System.IO.File.ReadAllBytes(_config.MQTT.CertificatePath);
+                    var certificate = new X509Certificate2(
+                        certBytes,
+                        _config.MQTT.CertificatePassword);
+                    // Note: Client certificate support may require additional configuration
+                    // depending on MQTTnet version. This is a placeholder for future enhancement.
+                    _logger?.LogInformation("MQTT: Loaded client certificate from {Path} (certificate authentication not yet fully implemented)", _config.MQTT.CertificatePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "MQTT: Failed to load client certificate from {Path}", _config.MQTT.CertificatePath);
+                    throw;
+                }
+            }
+
+            builder = builder.WithTlsOptions(tlsOptions);
+            _logger?.LogInformation("MQTT: TLS/SSL enabled (AllowUntrustedCertificates: {AllowUntrusted})", 
+                _config.MQTT.AllowUntrustedCertificates);
+        }
 
         // Add credentials only if provided
         if (!string.IsNullOrWhiteSpace(_username) && !string.IsNullOrWhiteSpace(_password))
@@ -216,6 +255,11 @@ public class MQTTControl
         }
     }
 
+    /// <summary>
+    /// Manually triggers the message received handler.
+    /// Typically used for testing or manual message injection.
+    /// </summary>
+    /// <param name="message">The message to process</param>
     public static void ReceiveMessage(string message)
     {
         _logger?.LogDebug("Received message");
@@ -302,7 +346,42 @@ public class MQTTControl
         var builder = new MqttClientOptionsBuilder()
             .WithClientId(_clientId)
             .WithTcpServer(_serverAddress, _port)
-            .WithCleanSession();
+            .WithCleanSession()
+            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds));
+
+        // Add TLS/SSL if configured (same as initial connection)
+        if (_config?.MQTT.UseTls == true)
+        {
+            // Configure TLS options for MQTTnet 5.0
+            var tlsOptions = new MqttClientTlsOptions
+            {
+                UseTls = true,
+                IgnoreCertificateChainErrors = _config.MQTT.AllowUntrustedCertificates,
+                IgnoreCertificateRevocationErrors = _config.MQTT.AllowUntrustedCertificates,
+                AllowUntrustedCertificates = _config.MQTT.AllowUntrustedCertificates
+            };
+
+            // Load client certificate if provided (for future enhancement)
+            if (!string.IsNullOrWhiteSpace(_config.MQTT.CertificatePath))
+            {
+                try
+                {
+                    var certBytes = System.IO.File.ReadAllBytes(_config.MQTT.CertificatePath);
+                    var certificate = new X509Certificate2(
+                        certBytes,
+                        _config.MQTT.CertificatePassword);
+                    // Note: Client certificate support may require additional configuration
+                    _logger?.LogDebug("MQTT: Client certificate loaded during reconnect (certificate authentication not yet fully implemented)");
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "MQTT: Failed to load client certificate during reconnect");
+                    throw;
+                }
+            }
+
+            builder = builder.WithTlsOptions(tlsOptions);
+        }
 
         if (!string.IsNullOrWhiteSpace(_username) && !string.IsNullOrWhiteSpace(_password))
         {
@@ -323,6 +402,10 @@ public class MQTTControl
         }
     }
 
+    /// <summary>
+    /// Stops automatic reconnection attempts.
+    /// Call this before graceful shutdown to prevent reconnection during shutdown.
+    /// </summary>
     public static void StopReconnect()
     {
         _shouldReconnect = false;
