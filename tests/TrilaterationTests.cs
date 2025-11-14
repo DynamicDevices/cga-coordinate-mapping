@@ -54,7 +54,10 @@ public class TrilaterationTests
     [Fact]
     public void ConvertUWBToPositions_WithThreeBeacons_CalculatesPositions()
     {
-        // Arrange
+        // Arrange - Ensure logger is initialized
+        AppLogger.Dispose();
+        AppLogger.Initialize(Microsoft.Extensions.Logging.LogLevel.Information);
+        
         var beacons = new List<BeaconConfig>
         {
             new BeaconConfig { Id = "B5A4", Latitude = 53.48514639104522, Longitude = -2.191785053920114, Altitude = 0.0 },
