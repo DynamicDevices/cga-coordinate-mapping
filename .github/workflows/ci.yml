@@ -41,9 +41,12 @@ jobs:
         
         # CRITICAL: Explicitly restore test project to ensure xunit is in assets file
         # Main project build overwrote assets, so we need to restore test project
+        # Note: This also restores main project (via project reference) without runtime, overwriting assets
+        # This is OK because main project is already built - we don't need runtime target for test build
         dotnet restore tests/InstDotNet.Tests.csproj --force
         
         # Build test project - use --no-restore to avoid overwriting assets again
+        # Test project doesn't need runtime target since main project is already built
         dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
         # Run tests - use --no-build to use pre-built test project
