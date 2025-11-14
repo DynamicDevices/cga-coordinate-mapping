@@ -38,10 +38,17 @@ public static class VersionInfo
             }
         }
 
-        // Fallback: use file write time
+        // Fallback: use file write time (not available in single-file apps)
         try
         {
-            var fileInfo = new FileInfo(assembly.Location);
+            var location = assembly.Location;
+            // In single-file apps, Location is empty - use AppContext.BaseDirectory instead
+            if (string.IsNullOrEmpty(location))
+            {
+                // Single-file app - can't get file write time, return Unknown
+                return "Unknown";
+            }
+            var fileInfo = new FileInfo(location);
             return fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss UTC");
         }
         catch
