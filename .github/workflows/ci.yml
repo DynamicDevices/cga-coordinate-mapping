@@ -31,7 +31,7 @@ jobs:
       run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore src/InstDotNet/InstDotNet.csproj -r ${{ matrix.runtime }}
       
     - name: Build (warnings treated as errors)
       run: dotnet build src/InstDotNet/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
