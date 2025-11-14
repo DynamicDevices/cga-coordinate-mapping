@@ -26,7 +26,10 @@ jobs:
       id: git
       run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       
-    - name: Test
+    - name: Clean build artifacts
+      run: rm -rf obj bin
+      
+    - name: Run Tests
       run: |
         # Just run tests - dotnet test will build both projects as needed
         # The test project depends on the main project, so both get built correctly
