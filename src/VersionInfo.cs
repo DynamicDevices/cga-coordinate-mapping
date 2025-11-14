@@ -27,9 +27,8 @@ public static class VersionInfo
     {
         // Try to get from assembly metadata (set at build time)
         var assembly = Assembly.GetExecutingAssembly();
-        var buildDateAttr = assembly.GetCustomAttribute<AssemblyMetadataAttribute>();
         
-        // Check for BuildDate metadata
+        // Check for BuildDate metadata - use GetCustomAttributes to handle multiple attributes
         var metadata = assembly.GetCustomAttributes<AssemblyMetadataAttribute>();
         foreach (var attr in metadata)
         {
