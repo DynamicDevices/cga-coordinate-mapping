@@ -1,5 +1,9 @@
 # CGA Coordinate Mapping
 
+[![CI Build and Publish](https://github.com/DynamicDevices/cga-coordinate-mapping/actions/workflows/ci.yml/badge.svg)](https://github.com/DynamicDevices/cga-coordinate-mapping/actions/workflows/ci.yml)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![Platform](https://img.shields.io/badge/platform-linux--arm64-lightgrey)](https://github.com/DynamicDevices/cga-coordinate-mapping)
+
 A .NET 8.0 application that converts Ultra-Wideband (UWB) sensor network data into GPS coordinates using trilateration algorithms. Designed for real-time position tracking and emergency response scenarios.
 
 ## Overview
@@ -23,6 +27,8 @@ This application processes UWB sensor network data received via MQTT, calculates
 - **WGS84Converter.cs**: Geodetic coordinate conversion (ECEF, ENU transformations)
 - **VectorExtensions.cs**: Vector math utilities
 - **UwbParser.py**: Python script for preprocessing edge data into network format
+
+For a detailed system architecture diagram, see [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md#system-architecture-diagram).
 
 ## Requirements
 

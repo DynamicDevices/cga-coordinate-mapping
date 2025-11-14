@@ -73,6 +73,69 @@
 - **Function**: Converts edge list format to network JSON structure
 - **Beacon Configuration**: Hardcoded beacon positions for B5A4, B57A, B98A
 
+## System Architecture Diagram
+
+> **⚠️ Important**: This diagram must be kept updated as the code changes. When modifying components, data flow, or architecture, update this diagram accordingly.
+
+```mermaid
+graph TB
+    subgraph "Input"
+        MQTT[MQTT Broker<br/>mqtt.dynamicdevices.co.uk:1883]
+        JSON[UWB Network JSON<br/>Relative coordinates + distances]
+    end
+    
+    subgraph "Application"
+        MQTTCtrl[MQTTControl.cs<br/>MQTT Client]
+        UWBManager[UWBManager.cs<br/>Network Manager]
+        Converter[UWB2GPSConverter.cs<br/>Trilateration Engine]
+        WGS84[WGS84Converter.cs<br/>Coordinate Transform]
+        Vector[VectorExtensions.cs<br/>Math Utilities]
+    end
+    
+    subgraph "Reference Data"
+        Beacons[Hardcoded Beacons<br/>B5A4, B57A, B98A<br/>GPS Coordinates]
+    end
+    
+    subgraph "Processing Pipeline"
+        Parse[Parse Network JSON]
+        Identify[Identify Known Beacons]
+        Trilat[3D Trilateration<br/>Sphere Intersection]
+        Refine[Iterative Refinement<br/>Gradient Descent]
+        CalcConf[Calculate Confidence<br/>Position Accuracy]
+        Filter[Filter Valid Nodes]
+    end
+    
+    subgraph "Output"
+        OutputJSON[Updated Network JSON<br/>GPS Coordinates + Confidence]
+        MQTTOut[MQTT Publish]
+    end
+    
+    MQTT -->|Subscribe| MQTTCtrl
+    JSON -->|Receive| MQTTCtrl
+    MQTTCtrl -->|Message| UWBManager
+    UWBManager -->|Network Data| Parse
+    Parse -->|Structured Network| Converter
+    Beacons -->|Reference Points| Identify
+    Identify -->|Known Positions| Trilat
+    Converter -->|3D Positions| Trilat
+    Trilat -->|Initial Positions| Refine
+    Refine -->|Optimized Positions| CalcConf
+    CalcConf -->|Positions + Accuracy| Filter
+    Filter -->|Valid Nodes| UWBManager
+    UWBManager -->|Serialized JSON| MQTTOut
+    MQTTOut -->|Publish| MQTT
+    
+    Converter -.->|Uses| WGS84
+    Converter -.->|Uses| Vector
+    WGS84 -.->|Uses| Vector
+    
+    style MQTT fill:#e1f5ff
+    style Beacons fill:#fff4e1
+    style Converter fill:#e8f5e9
+    style WGS84 fill:#e8f5e9
+    style OutputJSON fill:#f3e5f5
+```
+
 ## Data Flow
 
 ```
