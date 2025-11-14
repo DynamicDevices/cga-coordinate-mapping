@@ -29,14 +29,8 @@ jobs:
     - name: Clean build artifacts
       run: rm -rf obj bin
       
-    - name: Restore dependencies (explicit xunit)
-      run: |
-        # Restore test project - this also restores main project as dependency
-        # and ensures xunit is in the shared assets file
-        dotnet restore tests/InstDotNet.Tests.csproj
-      
     - name: Run Tests
-      run: dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore --verbosity normal
+      run: dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --verbosity normal
       continue-on-error: false
 
   build:
