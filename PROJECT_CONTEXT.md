@@ -419,14 +419,16 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 The CI workflow (`.github/workflows/ci.yml`) has been simplified for maximum reliability. The current working configuration uses:
 
-1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Restores all packages once
-2. **Build main project** (`dotnet build --no-restore -r runtime`) - Builds with runtime identifier
-3. **Build test project** (`dotnet build --no-restore`) - Builds test project
-4. **Run tests** (`dotnet test --no-build`) - Runs tests without rebuilding
+1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Restores all packages
+2. **Restore main project with runtime** (`dotnet restore src/InstDotNet.csproj -r runtime --force`) - Updates assets for runtime-specific build
+3. **Build main project** (`dotnet build --no-restore -r runtime`) - Builds with runtime identifier
+4. **Build test project** (`dotnet build`) - Builds test project (restores its own packages automatically)
+5. **Run tests** (`dotnet test --no-build`) - Runs tests without rebuilding
 
 **Why this is reliable:**
-- Single restore step ensures all packages are available
-- `--no-restore` flags prevent redundant restore operations
+- Solution restore gets all packages
+- Main project restore with `--force` ensures runtime-specific assets are updated
+- Test project build without `--no-restore` allows it to restore its own packages (avoids conflicts)
 - `--no-build` flag on test prevents redundant builds
 - Minimal steps reduce chance of race conditions or timing issues
 - All steps in one script block for atomic execution
