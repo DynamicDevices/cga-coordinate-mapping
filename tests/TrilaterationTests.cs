@@ -177,7 +177,10 @@ public class TrilaterationTests
     [Fact]
     public void ConvertUWBToPositions_WithRefinementDisabled_SkipsRefinement()
     {
-        // Arrange
+        // Arrange - Ensure logger is initialized (may have been disposed by previous test)
+        AppLogger.Dispose();
+        AppLogger.Initialize(Microsoft.Extensions.Logging.LogLevel.Information);
+        
         var beacons = new List<BeaconConfig>
         {
             new BeaconConfig { Id = "B5A4", Latitude = 53.485, Longitude = -2.192, Altitude = 0.0 },
