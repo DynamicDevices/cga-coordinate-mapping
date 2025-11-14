@@ -136,13 +136,24 @@ dotnet run
 ```
 
 The application will:
-1. Connect to the MQTT broker
-2. Subscribe to the receive topic
-3. Process incoming UWB network updates
-4. Calculate positions for unknown nodes
-5. Publish updated network with GPS coordinates
+1. Display version information (version, build date, git commit hash)
+2. Connect to the MQTT broker
+3. Subscribe to the receive topic
+4. Process incoming UWB network updates
+5. Calculate positions for unknown nodes
+6. Publish updated network with GPS coordinates
 
 Press `Ctrl+C` to exit gracefully.
+
+## Versioning
+
+This project uses [Semantic Versioning](https://semver.org/) (MAJOR.MINOR.PATCH).
+
+- **Version**: Defined in `InstDotNet.csproj` and `VERSION` file
+- **Build Date**: Automatically set at build time (UTC)
+- **Git Commit Hash**: Automatically extracted from git repository (short hash)
+
+Version information is displayed when the application starts and is embedded in the assembly metadata. To update the version, modify the `<Version>` property in `InstDotNet.csproj` and the `VERSION` file.
 
 ## Python Parser
 

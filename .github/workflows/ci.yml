@@ -15,17 +15,23 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full git history for commit hash
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
         
+    - name: Get Git Commit Hash
+      id: git
+      run: echo "hash=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
     - name: Restore dependencies
       run: dotnet restore
       
     - name: Publish Release for Linux ARM64
-      run: dotnet publish -c Release -r linux-arm64 --self-contained false -o ./publish/linux-arm64
+      run: dotnet publish -c Release -r linux-arm64 --self-contained false -o ./publish/linux-arm64 -p:GitCommitHash=${{ steps.git.outputs.hash }}
       
     - name: Create archive
       run: |

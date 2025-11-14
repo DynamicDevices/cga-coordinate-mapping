@@ -7,6 +7,10 @@ class Program
 
     static async Task Main()
     {
+        // Display version information
+        Console.WriteLine($"CGA Coordinate Mapping - {VersionInfo.FullVersion}");
+        Console.WriteLine();
+
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
         await MQTTControl.Initialise(cts);
