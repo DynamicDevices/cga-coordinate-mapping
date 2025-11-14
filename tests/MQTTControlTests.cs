@@ -108,7 +108,8 @@ public class MQTTControlTests
     [Fact]
     public void OnMessageReceived_CanBeSetAndInvoked()
     {
-        // Arrange
+        // Arrange - Clear any existing handlers first
+        MQTTControl.OnMessageReceived = null;
         bool wasInvoked = false;
         MQTTControl.OnMessageReceived = (msg) => { wasInvoked = true; };
 
