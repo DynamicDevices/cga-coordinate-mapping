@@ -44,7 +44,7 @@ public static class AppLogger
         }
         try
         {
-            return _loggerFactory.CreateLogger(categoryName);
+        return _loggerFactory.CreateLogger(categoryName);
         }
         catch (ObjectDisposedException)
         {
@@ -71,7 +71,7 @@ public static class AppLogger
         {
             // Logger was disposed (e.g., during tests), reinitialize
             Initialize();
-            return _loggerFactory!.CreateLogger<T>();
+        return _loggerFactory!.CreateLogger<T>();
         }
     }
 
@@ -96,7 +96,7 @@ public static class AppLogger
             {
                 // Logger was disposed (e.g., during tests), reinitialize
                 Initialize();
-                return _defaultLogger!;
+            return _defaultLogger!;
             }
         }
     }
