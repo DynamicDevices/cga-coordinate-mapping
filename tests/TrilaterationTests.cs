@@ -121,7 +121,10 @@ public class TrilaterationTests
     [Fact]
     public void ConvertUWBToPositions_WithInsufficientBeacons_LogsError()
     {
-        // Arrange
+        // Arrange - Ensure logger is initialized
+        AppLogger.Dispose();
+        AppLogger.Initialize(Microsoft.Extensions.Logging.LogLevel.Information);
+        
         var network = new UWB2GPSConverter.Network
         {
             uwbs = new UWB2GPSConverter.UWB[]
@@ -154,7 +157,10 @@ public class TrilaterationTests
     [Fact]
     public void ConvertUWBToPositions_WithNullNetwork_HandlesGracefully()
     {
-        // Arrange
+        // Arrange - Ensure logger is initialized
+        AppLogger.Dispose();
+        AppLogger.Initialize(Microsoft.Extensions.Logging.LogLevel.Information);
+        
         UWB2GPSConverter.Network? network = null;
 
         // Act & Assert - Should not throw
@@ -164,7 +170,10 @@ public class TrilaterationTests
     [Fact]
     public void ConvertUWBToPositions_WithEmptyNetwork_HandlesGracefully()
     {
-        // Arrange
+        // Arrange - Ensure logger is initialized
+        AppLogger.Dispose();
+        AppLogger.Initialize(Microsoft.Extensions.Logging.LogLevel.Information);
+        
         var network = new UWB2GPSConverter.Network
         {
             uwbs = Array.Empty<UWB2GPSConverter.UWB>()
@@ -309,7 +318,10 @@ public class TrilaterationTests
     [Fact]
     public void ConvertUWBToPositions_WithNoEdges_HandlesGracefully()
     {
-        // Arrange
+        // Arrange - Ensure logger is initialized
+        AppLogger.Dispose();
+        AppLogger.Initialize(Microsoft.Extensions.Logging.LogLevel.Information);
+        
         var network = new UWB2GPSConverter.Network
         {
             uwbs = new UWB2GPSConverter.UWB[]
