@@ -290,7 +290,7 @@ public class UWB2GPSConverter
         return totalError;
     }
 
-    private static float EdgeErrorSquared(UWB end0, UWB end1, float edgeDistance)
+    public static float EdgeErrorSquared(UWB end0, UWB end1, float edgeDistance)
     {
         float currentDist = Vector3Extensions.Distance(end0.position, end1.position);
         float error = Math.Abs(currentDist - edgeDistance);

@@ -4,6 +4,10 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstDotNet", "InstDotNet.csproj", "{039638F3-A6D7-FB67-E733-27BD896EFDC4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{10F666FE-35E7-4C24-86F2-220319AD0525}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstDotNet.Tests", "tests\InstDotNet.Tests\InstDotNet.Tests.csproj", "{EAA25DA5-729A-43A6-9AC6-F2C6C9C525EC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,11 +18,18 @@ Global
 		{039638F3-A6D7-FB67-E733-27BD896EFDC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{039638F3-A6D7-FB67-E733-27BD896EFDC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{039638F3-A6D7-FB67-E733-27BD896EFDC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAA25DA5-729A-43A6-9AC6-F2C6C9C525EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAA25DA5-729A-43A6-9AC6-F2C6C9C525EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAA25DA5-729A-43A6-9AC6-F2C6C9C525EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAA25DA5-729A-43A6-9AC6-F2C6C9C525EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {480093EF-191C-4DB3-87CF-2B165104DCD8}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{EAA25DA5-729A-43A6-9AC6-F2C6C9C525EC} = {10F666FE-35E7-4C24-86F2-220319AD0525}
 	EndGlobalSection
 EndGlobal
