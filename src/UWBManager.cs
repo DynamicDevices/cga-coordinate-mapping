@@ -51,6 +51,11 @@ public class UWBManager
     {
         try
         {
+            if (message == null)
+            {
+                _logger?.LogError("Message is null, cannot deserialize");
+                return;
+            }
             if (jsonOptions == null)
             {
                 _logger?.LogError("jsonOptions is null, cannot deserialize message");
