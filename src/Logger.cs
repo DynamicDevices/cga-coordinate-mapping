@@ -86,7 +86,18 @@ public static class AppLogger
             {
                 Initialize();
             }
-            return _defaultLogger!;
+            try
+            {
+                // Verify logger is still valid
+                _ = _loggerFactory?.CreateLogger("InstDotNet");
+                return _defaultLogger!;
+            }
+            catch (ObjectDisposedException)
+            {
+                // Logger was disposed (e.g., during tests), reinitialize
+                Initialize();
+                return _defaultLogger!;
+            }
         }
     }
 
