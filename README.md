@@ -64,7 +64,7 @@ dotnet publish -c Release -r linux-arm64 --self-contained true
 dotnet publish -c Release -r linux-arm64 --self-contained false
 ```
 
-Output will be in: `bin/Release/net8.0/linux-arm64/publish/`
+Output will be in: `src/InstDotNet/bin/Release/net8.0/linux-arm64/publish/`
 
 ### Build for Other Platforms
 
@@ -128,11 +128,12 @@ The application expects JSON messages in the following format:
 ## Running
 
 ```bash
-# Run the application
+# Run the application (from project directory)
+cd src/InstDotNet
 ./bin/Release/net8.0/linux-arm64/publish/InstDotNet
 
 # Or with dotnet
-dotnet run
+dotnet run --project src/InstDotNet/InstDotNet.csproj
 ```
 
 The application will:
@@ -186,16 +187,25 @@ After initial trilateration, the system applies gradient descent optimization:
 
 ```
 .
-├── Program.cs              # Main entry point
-├── MQTTControl.cs          # MQTT client implementation
-├── UWBManager.cs           # UWB network management
-├── UWB2GPSConverter.cs     # Trilateration and position calculation
-├── WGS84Converter.cs       # Geodetic coordinate conversions
-├── VectorExtensions.cs    # Vector math utilities
-├── UwbParser.py           # Python preprocessing script
-├── TestNodes.json         # Sample test data
-├── InstDotNet.csproj      # Project file
-└── README.md              # This file
+├── src/
+│   └── InstDotNet/
+│       ├── Program.cs              # Main entry point
+│       ├── MQTTControl.cs          # MQTT client implementation
+│       ├── UWBManager.cs           # UWB network management
+│       ├── UWB2GPSConverter.cs     # Trilateration and position calculation
+│       ├── WGS84Converter.cs       # Geodetic coordinate conversions
+│       ├── VectorExtensions.cs     # Vector math utilities
+│       ├── Logger.cs               # Logging framework
+│       ├── VersionInfo.cs          # Version information
+│       └── InstDotNet.csproj       # Project file
+├── tests/
+│   └── InstDotNet.Tests/           # Unit tests
+├── UwbParser.py                    # Python preprocessing script
+├── TestNodes.json                  # Sample test data
+├── InstDotNet.sln                  # Solution file
+├── LICENSE                         # GPLv3 license
+├── CONTRIBUTING.md                 # Contribution guidelines
+└── README.md                       # This file
 ```
 
 ## Development
