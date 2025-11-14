@@ -32,16 +32,19 @@ jobs:
       
     - name: Build and test
       run: |
-        # Restore solution WITH runtime identifier - this gets ALL packages including:
-        # - Runtime-specific assets for main project (net8.0/linux-arm64 or net8.0/linux-x64)
-        # - Test packages (xunit) for test project
-        # This is the key: restoring the solution with runtime includes everything needed
-        dotnet restore InstDotNet.sln -r ${{ matrix.runtime }}
+        # CRITICAL: Restore solution WITHOUT runtime first - this restores ALL projects including test project
+        # This gets test packages (xunit) into the assets file
+        dotnet restore InstDotNet.sln
         
-        # Build main project - use --no-restore since we already restored with runtime
+        # CRITICAL: Restore main project WITH runtime - this adds runtime-specific target to assets file
+        # Using --force ensures it updates the existing assets file rather than overwriting it
+        # This way both net8.0 (with xunit) and net8.0/runtime targets are in the assets file
+        dotnet restore src/InstDotNet.csproj -r ${{ matrix.runtime }} --force
+        
+        # Build main project - use --no-restore since we already restored
         dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
-        # Build test project - use --no-restore since we already restored with runtime
+        # Build test project - use --no-restore since we already restored
         dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
         # Run tests - use --no-build to use pre-built test project
