@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Buffers;
 using System.Text;
@@ -6,9 +7,11 @@ using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Packets;   // for v5 subscribe options if needed
 using MQTTnet.Protocol;  // QoS enums
+using Microsoft.Extensions.Logging;
 
 public class MQTTControl
 {
+    private static ILogger? _logger;
     public const string DEFAULT_CLIENT_ID = "clientId-UwbManager-001";
     public const string DEFAULT_SERVER_ADDRESS = "mqtt.dynamicdevices.co.uk";
     public const string DEFAULT_USERNAME = "";
@@ -56,6 +59,8 @@ public class MQTTControl
         var factory = new MqttClientFactory();
         client = factory.CreateMqttClient();
 
+        _logger = AppLogger.GetLogger<MQTTControl>();
+
         // Setup handlers
         client.ApplicationMessageReceivedAsync += e =>
         {
@@ -64,26 +69,26 @@ public class MQTTControl
                 var sequence = e.ApplicationMessage.Payload;
                 var bytes = sequence.IsEmpty ? Array.Empty<byte>() : sequence.ToArray();
                 var payload = bytes.Length == 0 ? string.Empty : Encoding.UTF8.GetString(bytes);
-                Console.WriteLine($"MSG [{e.ApplicationMessage.Topic}]: {payload}");
+                _logger?.LogDebug("MSG [{Topic}]: {Payload}", e.ApplicationMessage.Topic, payload);
                 // forward to any subscriber in the app
                 OnMessageReceived?.Invoke(payload);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing incoming message: {ex.Message}");
+                _logger?.LogError(ex, "Error processing incoming message");
             }
             return Task.CompletedTask;
         };
 
         client.ConnectedAsync += e =>
         {
-            Console.WriteLine("MQTT: Connected.");
+            _logger?.LogInformation("MQTT: Connected.");
             return Task.CompletedTask;
         };
 
         client.DisconnectedAsync += e =>
         {
-            Console.WriteLine($"MQTT: Disconnected. Reason: {e?.Exception?.Message ?? "none"}");
+            _logger?.LogWarning("MQTT: Disconnected. Reason: {Reason}", e?.Exception?.Message ?? "none");
             return Task.CompletedTask;
         };
 
@@ -102,7 +107,7 @@ public class MQTTControl
 
         try
         {
-            Console.WriteLine($"MQTT: Connecting to {_serverAddress}:{_port} ...");
+            _logger?.LogInformation("MQTT: Connecting to {Server}:{Port}...", _serverAddress, _port);
             await client.ConnectAsync(options, _cts.Token).ConfigureAwait(false);
 
             // Subscribe (MQTT v5 supports more options; QoS shown here)
@@ -113,12 +118,12 @@ public class MQTTControl
 
             await Publish($"Connected to {_serverAddress}. Subscribed to {_receiveMessageTopic}. Publishing to {_sendMessageTopic}.");
 
-            Console.WriteLine($"Connected to {_serverAddress}");
-            Console.WriteLine($"MQTT: Subscribed to {_receiveMessageTopic}");
+            _logger?.LogInformation("Connected to {Server}", _serverAddress);
+            _logger?.LogInformation("MQTT: Subscribed to {Topic}", _receiveMessageTopic);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"MQTT: Connect/Subscribe failed: {ex.GetType().Name}: {ex.Message}");
+            _logger?.LogError(ex, "MQTT: Connect/Subscribe failed: {ExceptionType}", ex.GetType().Name);
             // rethrow so caller can observe if they awaited Initialise
             throw;
         }
@@ -136,12 +141,12 @@ public class MQTTControl
             if (client.IsConnected)
             {
                 await client.DisconnectAsync().ConfigureAwait(false);
-                Console.WriteLine("MQTT: Disconnect complete.");
+                _logger?.LogInformation("MQTT: Disconnect complete.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"MQTT: Error during disconnect: {ex.Message}");
+            _logger?.LogError(ex, "MQTT: Error during disconnect");
         }
     }
 
@@ -149,13 +154,13 @@ public class MQTTControl
     {
         if (client == null)
         {
-            Console.WriteLine("MQTT: Publish skipped - client is null.");
+            _logger?.LogWarning("MQTT: Publish skipped - client is null.");
             return;
         }
 
         if (!client.IsConnected)
         {
-            Console.WriteLine("MQTT: Publish skipped - client not connected.");
+            _logger?.LogWarning("MQTT: Publish skipped - client not connected.");
             return;
         }
 
@@ -168,17 +173,17 @@ public class MQTTControl
         try
         {
             await client.PublishAsync(messageOut, _cts.Token).ConfigureAwait(false);
-            Console.WriteLine("MQTT: Published.");
+            _logger?.LogDebug("MQTT: Published to {Topic}", _sendMessageTopic);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"MQTT: Publish error: {ex.Message}");
+            _logger?.LogError(ex, "MQTT: Publish error");
         }
     }
 
     public static void ReceiveMessage(string message)
     {
-        Console.WriteLine($"Received message");
+        _logger?.LogDebug("Received message");
         OnMessageReceived?.Invoke(message);
     }
 

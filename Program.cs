@@ -1,20 +1,34 @@
 ﻿// Program.cs  (net8.0, MQTTnet 5.x)
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 class Program
 {
-
-
     static async Task Main()
     {
+        // Initialize logging from environment variable or default to Information
+        var logLevel = AppLogger.ParseLogLevel(Environment.GetEnvironmentVariable("LOG_LEVEL"));
+        AppLogger.Initialize(logLevel);
+
+        var logger = AppLogger.GetLogger<Program>();
+
         // Display version information
-        Console.WriteLine($"CGA Coordinate Mapping - {VersionInfo.FullVersion}");
-        Console.WriteLine();
+        logger.LogInformation("CGA Coordinate Mapping - {Version}", VersionInfo.FullVersion);
+        logger.LogInformation("Log level: {LogLevel}", logLevel);
+        logger.LogInformation("");
 
         using var cts = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-        await MQTTControl.Initialise(cts);
-        UWBManager.Initialise();
+        Console.CancelKeyPress += (_, e) => 
+        { 
+            e.Cancel = true; 
+            cts.Cancel();
+            logger.LogInformation("Shutdown requested by user");
+        };
+
+        try
+        {
+            await MQTTControl.Initialise(cts);
+            UWBManager.Initialise();
 
         //Try loading from Python-generated file if it exists
         // string filePath = "TestNodes.json";
@@ -59,14 +73,23 @@ class Program
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in update loop: {ex.Message}");
+                logger.LogError(ex, "Error in update loop");
             }
         }, cts.Token);
 
-        Console.WriteLine("Press Ctrl+C to exit…");
+        logger.LogInformation("Press Ctrl+C to exit…");
         try { await Task.Delay(Timeout.Infinite, cts.Token); } catch { }
 
+        logger.LogInformation("Shutting down...");
         await MQTTControl.DisconnectAsync();
+        AppLogger.Dispose();
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Fatal error in application");
+            AppLogger.Dispose();
+            throw;
+        }
     }
 }
 

@@ -1,9 +1,10 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.Logging;
 
 public class UWBManager
 {
@@ -13,9 +14,11 @@ public class UWBManager
     private static volatile bool updateNetworkTrigger = false;
     private static bool isUpdating = false;
     private static JsonSerializerOptions jsonOptions;
+    private static ILogger? _logger;
 
     public static void Initialise()
     {
+        _logger = AppLogger.GetLogger<UWBManager>();
         updateNetworkTrigger = false;
         isUpdating = false;
         jsonOptions = new JsonSerializerOptions
@@ -26,6 +29,7 @@ public class UWBManager
         };
         MQTTControl.OnMessageReceived -= UpdateUwbsFromMessage;
         MQTTControl.OnMessageReceived += UpdateUwbsFromMessage;
+        network = null!; // Will be set when message received
     }
 
     public static void UpdateUwbsFromMessage(string message)
@@ -33,12 +37,12 @@ public class UWBManager
         try
         {
             network = JsonSerializer.Deserialize<UWB2GPSConverter.Network>(message, jsonOptions);
-            Console.WriteLine($"Successfully parsed mqtt message into uwb network. Found {network.uwbs.Length} uwbs.");
+            _logger?.LogInformation("Successfully parsed MQTT message into UWB network. Found {Count} UWBs.", network.uwbs.Length);
             updateNetworkTrigger = true;
         }
         catch (System.Exception e)
         {
-            Console.Error.WriteLine($"Failed to parse mqtt message into uwb network: {e.Message}");
+            _logger?.LogError(e, "Failed to parse MQTT message into UWB network");
             return;
         }        
 
@@ -58,7 +62,7 @@ public class UWBManager
     {
         if (isUpdating)
         {
-            Console.WriteLine("UpdateUwbs: already updating — skipping re-entrant call.");
+            _logger?.LogDebug("UpdateUwbs: already updating — skipping re-entrant call.");
             return;
         }
 
@@ -66,7 +70,7 @@ public class UWBManager
 
         if (network == null || network.uwbs == null || network.uwbs.Length == 0)
         {
-            Console.WriteLine("UpdateUwbs: network is null or empty, skipping update.");
+            _logger?.LogWarning("UpdateUwbs: network is null or empty, skipping update.");
             isUpdating = false;
             return;
         }
@@ -98,7 +102,7 @@ public class UWBManager
 
     private static void SendNetwork(UWB2GPSConverter.Network sendNetwork)
     {
-        Console.WriteLine($"Sending network with {sendNetwork.uwbs.Length} uwbs.");
+        _logger?.LogInformation("Sending network with {Count} UWBs.", sendNetwork.uwbs.Length);
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
         _ = Task.Run(async () => await MQTTControl.Publish(data));
     }

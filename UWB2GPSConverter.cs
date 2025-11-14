@@ -1,11 +1,16 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 public class UWB2GPSConverter
 {
+    private static ILogger? _logger;
+
     [System.Serializable]
+#nullable disable  // JSON deserialization classes
     public class UWB
     {
         public string id;
@@ -47,6 +52,7 @@ public class UWB2GPSConverter
     }
     [System.Serializable]
     public class Network
+#nullable enable
     {
         public UWB[] uwbs;
         public Network() { }
@@ -59,9 +65,11 @@ public class UWB2GPSConverter
 
     public static void ConvertUWBToPositions(Network network, bool refine)
     {
+        _logger ??= AppLogger.GetLogger<UWB2GPSConverter>();
+
         if (network == null || network.uwbs == null || network.uwbs.Length == 0)
         {
-            Console.Error.WriteLine("ConvertUWBToPositions: network is null or empty.");
+            _logger.LogError("ConvertUWBToPositions: network is null or empty.");
             return;
         }
 
@@ -97,7 +105,7 @@ public class UWB2GPSConverter
 
         if (knownNodes.Count < 3)
         {
-            Console.Error.WriteLine("Not enough known nodes for triangulation. You need 3 beacons with positionKnown = true and lat/lon/alts set");
+            _logger?.LogError("Not enough known nodes for triangulation. You need 3 beacons with positionKnown = true and lat/lon/alts set");
             return;
         }
 
@@ -137,7 +145,7 @@ public class UWB2GPSConverter
                 //Get latLonAlt ref point from the first known node
                 if (triangulationNodes[0].latLonAlt == null || triangulationNodes[0].latLonAlt.Length < 3)
                 {
-                    Console.Error.WriteLine($"Node {triangulationNodes[0].id} has invalid latLonAlt, skipping triangulation for {node.id}");
+                    _logger?.LogWarning("Node {NodeId} has invalid latLonAlt, skipping triangulation for {TargetNodeId}", triangulationNodes[0].id, node.id);
                     continue;
                 }
                 double refPointLat = triangulationNodes[0].latLonAlt[0];
@@ -164,7 +172,8 @@ public class UWB2GPSConverter
 
                 if (Math.Abs(j) < 1e-6f)
                 {
-                    Console.Error.WriteLine($"Cannot triangulate node {node.id} with triangulation nodes {triangulationNodes[0].id}, {triangulationNodes[1].id} and {triangulationNodes[2].id} : the nodes are collinear or too close.");
+                    _logger?.LogWarning("Cannot triangulate node {NodeId} with triangulation nodes {Node0}, {Node1}, {Node2}: the nodes are collinear or too close.", 
+                        node.id, triangulationNodes[0].id, triangulationNodes[1].id, triangulationNodes[2].id);
                     continue;
                 }
 
@@ -246,18 +255,22 @@ public class UWB2GPSConverter
         }
         total *= 0.5f;
 
-        Console.WriteLine($"UWB to GPS conversion completed. Updated {totalNodesUpdated}/{totalNodes} positions. Average error: {totalError / total}m.");
+        _logger?.LogInformation("UWB to GPS conversion completed. Updated {Updated}/{Total} positions. Average error: {Error:F2}m.", 
+            totalNodesUpdated, totalNodes, totalError / total);
         if (totalNodesUpdated + 3 < totalNodes)
         {
-            string m = "Could not triangulate nodes: ";
+            var untriangulatedNodes = new List<string>();
             foreach (UWB node in allNodes)
             {
                 if (!node.positionKnown && node.lastPositionUpdateTime < timeNow)
                 {
-                    m += $"{node.id}, ";
+                    untriangulatedNodes.Add(node.id);
                 }
             }
-            Console.WriteLine(m);
+            if (untriangulatedNodes.Count > 0)
+            {
+                _logger?.LogWarning("Could not triangulate nodes: {Nodes}", string.Join(", ", untriangulatedNodes));
+            }
         }
 
     }
@@ -284,7 +297,7 @@ public class UWB2GPSConverter
         return error * error; // Squared error
     }
 
-    public static bool TryGetEndFromEdge(Edge edge, string currentNodeId, Dictionary<string, UWB> nodeMap, out UWB end)
+    public static bool TryGetEndFromEdge(Edge edge, string currentNodeId, Dictionary<string, UWB> nodeMap, out UWB? end)
     {
         end = null;
         if (edge == null || string.IsNullOrEmpty(currentNodeId) || nodeMap == null) return false;
@@ -314,7 +327,7 @@ public class UWB2GPSConverter
     }
 
     // Legacy overload for backward compatibility (uses O(n) lookup)
-    public static bool TryGetEndFromEdge(Edge edge, Network network, out UWB end)
+    public static bool TryGetEndFromEdge(Edge edge, Network network, out UWB? end)
     {
         end = null;
         if (network == null || network.uwbs == null || edge == null) return false;
@@ -332,3 +345,4 @@ public class UWB2GPSConverter
         return false;
     }
 }
+
