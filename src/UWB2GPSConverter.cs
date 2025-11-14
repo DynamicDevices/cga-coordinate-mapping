@@ -119,28 +119,28 @@ public class UWB2GPSConverter
         }
     }
 
-        public static void ConvertUWBToPositions(Network network, bool refine, AlgorithmConfig? algorithmConfig = null)
+    public static void ConvertUWBToPositions(Network network, bool refine, AlgorithmConfig? algorithmConfig = null)
+    {
+        // Ensure logger is available - reinitialize if disposed
+        if (_logger == null)
         {
-            // Ensure logger is available - reinitialize if disposed
-            if (_logger == null)
+            try
             {
-                try
-                {
-                    _logger = AppLogger.GetLogger<UWB2GPSConverter>();
-                }
-                catch (ObjectDisposedException)
-                {
-                    // Logger was disposed, reinitialize it
-                    AppLogger.Initialize(LogLevel.Information);
-                    _logger = AppLogger.GetLogger<UWB2GPSConverter>();
-                }
+                _logger = AppLogger.GetLogger<UWB2GPSConverter>();
             }
+            catch (ObjectDisposedException)
+            {
+                // Logger was disposed, reinitialize it
+                AppLogger.Initialize(LogLevel.Information);
+                _logger = AppLogger.GetLogger<UWB2GPSConverter>();
+            }
+        }
 
-            if (network == null || network.uwbs == null || network.uwbs.Length == 0)
-            {
-                _logger.LogError("ConvertUWBToPositions: network is null or empty.");
-                return;
-            }
+        if (network == null || network.uwbs == null || network.uwbs.Length == 0)
+        {
+            _logger.LogError("ConvertUWBToPositions: network is null or empty.");
+            return;
+        }
 
         // Apply configured beacons to network nodes
         ApplyConfiguredBeacons(network);
