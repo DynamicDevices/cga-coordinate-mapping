@@ -36,12 +36,18 @@ jobs:
         dotnet restore InstDotNet.sln
         
         # Build main project with runtime - automatically restores with runtime if needed
+        # This overwrites assets file and removes xunit, but main project is built
         dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
         
-        # Run tests - automatically restores, builds, and runs
-        # This restore will overwrite assets but will include xunit packages
-        # The main project is already built, so we don't need runtime-specific assets for tests
-        dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --verbosity normal
+        # CRITICAL: Explicitly restore test project to ensure xunit is in assets file
+        # Main project build overwrote assets, so we need to restore test project
+        dotnet restore tests/InstDotNet.Tests.csproj --force
+        
+        # Build test project - use --no-restore to avoid overwriting assets again
+        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
+        
+        # Run tests - use --no-build to use pre-built test project
+        dotnet test tests/InstDotNet.Tests.csproj -c Release --no-build --verbosity normal
       continue-on-error: false
       
     - name: Publish Release for ${{ matrix.runtime }}
