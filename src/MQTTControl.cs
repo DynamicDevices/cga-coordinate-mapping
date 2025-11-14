@@ -13,7 +13,7 @@ using InstDotNet;
 public class MQTTControl
 {
     private static ILogger? _logger;
-    public const string DEFAULT_CLIENT_ID = "clientId-UwbManager-001";
+    public const string DEFAULT_CLIENT_ID = "clientId-UwbManager-001"; // Fallback if hardware ID unavailable
     public const string DEFAULT_SERVER_ADDRESS = "mqtt.dynamicdevices.co.uk";
     public const string DEFAULT_USERNAME = "";
     public const string DEFAULT_PASSWORD = "";
@@ -52,11 +52,21 @@ public class MQTTControl
         _cts = cts ?? new CancellationTokenSource();
         _config = config;
         
-        // Use config if provided, otherwise use parameters
-        if (config?.MQTT != null)
-        {
-            _clientId = config.MQTT.ClientId;
-            _serverAddress = config.MQTT.ServerAddress;
+            // Use config if provided, otherwise use parameters
+            if (config?.MQTT != null)
+            {
+                // Use hardware-based client ID if config doesn't specify one, or if it's the default
+                if (string.IsNullOrWhiteSpace(config.MQTT.ClientId) || 
+                    config.MQTT.ClientId == DEFAULT_CLIENT_ID)
+                {
+                    _clientId = HardwareId.GetMqttClientId("UwbManager");
+                    _logger?.LogInformation("Using hardware-based MQTT client ID: {ClientId}", _clientId);
+                }
+                else
+                {
+                    _clientId = config.MQTT.ClientId;
+                }
+                _serverAddress = config.MQTT.ServerAddress;
             _port = config.MQTT.Port;
             _username = config.MQTT.Username;
             _password = config.MQTT.Password;
@@ -66,7 +76,15 @@ public class MQTTControl
         }
         else
         {
-            _clientId = clientId;
+            // Use hardware-based client ID if default is provided, otherwise use parameter
+            if (clientId == DEFAULT_CLIENT_ID || string.IsNullOrWhiteSpace(clientId))
+            {
+                _clientId = HardwareId.GetMqttClientId("UwbManager");
+            }
+            else
+            {
+                _clientId = clientId;
+            }
             _serverAddress = serverAddress;
             _port = port;
             _username = username;
@@ -80,6 +98,9 @@ public class MQTTControl
         client = factory.CreateMqttClient();
 
         _logger = AppLogger.GetLogger<MQTTControl>();
+        
+        // Log the client ID being used
+        _logger.LogInformation("MQTT Client ID: {ClientId}", _clientId);
 
         // Setup handlers
         client.ApplicationMessageReceivedAsync += e =>
