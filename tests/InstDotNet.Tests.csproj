@@ -26,9 +26,4 @@
     <ProjectReference Include="../src/InstDotNet.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-    <Using Include="InstDotNet" />
-  </ItemGroup>
-
 </Project>
