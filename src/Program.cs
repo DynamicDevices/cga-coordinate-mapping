@@ -46,6 +46,21 @@ class Program
 
         try
         {
+            // Initialize health check
+            HealthCheck.Initialize(logger);
+            
+            // Start health check server
+            int healthCheckPort = _config.Application.HealthCheckPort;
+            try
+            {
+                HealthCheckServer.Start(healthCheckPort, logger);
+                logger.LogInformation("Health check endpoint available at http://localhost:{Port}/health", healthCheckPort);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to start health check server on port {Port}, continuing without health endpoint", healthCheckPort);
+            }
+
             await MQTTControl.Initialise(cts, _config);
             UWBManager.Initialise(_config);
 
@@ -80,6 +95,7 @@ class Program
             try { await Task.Delay(Timeout.Infinite, cts.Token); } catch { }
 
             logger.LogInformation("Shutting down...");
+            HealthCheckServer.Stop();
             MQTTControl.StopReconnect();
             await MQTTControl.DisconnectAsync();
             AppLogger.Dispose();

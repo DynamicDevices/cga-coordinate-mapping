@@ -198,6 +198,14 @@ public class MQTTControl
         await ConnectWithRetryAsync(options, _cts.Token).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Check if MQTT client is connected
+    /// </summary>
+    public static bool IsConnected()
+    {
+        return client != null && client.IsConnected;
+    }
+
     public static async Task DisconnectAsync()
     {
         if (client == null)

@@ -56,6 +56,7 @@ public class ApplicationConfig
 {
     public int UpdateIntervalMs { get; set; } = 10;
     public string LogLevel { get; set; } = "Information";
+    public int HealthCheckPort { get; set; } = 8080;
 }
 
 public class AlgorithmConfig

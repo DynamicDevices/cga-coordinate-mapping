@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -105,6 +106,12 @@ public class UWBManager
 
         bool refine = _config?.Algorithm.RefinementEnabled ?? true;
         UWB2GPSConverter.ConvertUWBToPositions(network, refine, _config?.Algorithm);
+
+        // Update health check metrics
+        HealthCheck.UpdateLastProcessTime();
+        var beaconCount = network.uwbs.Count(u => u.positionKnown);
+        HealthCheck.UpdateBeaconCount(beaconCount);
+        HealthCheck.IncrementNodesProcessed(network.uwbs.Length);
 
         if (sendUwbsList == null)
         {
