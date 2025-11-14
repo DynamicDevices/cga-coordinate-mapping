@@ -354,17 +354,32 @@ public class UWB2GPSConverter
             }
         }
 
+        // Calculate average error across all edges
         float totalError = 0;
-        float total = 0;
+        int totalEdges = 0;
+        float maxError = 0;
+        float minError = float.MaxValue;
+        
         foreach (UWB node in network.uwbs)
         {
-            totalError += NodeError(node, network, nodeMap);
-            total++;
+            foreach (Edge edge in node.edges)
+            {
+                if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB? end) && end != null)
+                {
+                    float currentDist = Vector3Extensions.Distance(node.position, end.position);
+                    float error = Math.Abs(currentDist - edge.distance);
+                    totalError += error;
+                    totalEdges++;
+                    if (error > maxError) maxError = error;
+                    if (error < minError) minError = error;
+                }
+            }
         }
-        total *= 0.5f;
 
-        _logger?.LogInformation("UWB to GPS conversion completed. Updated {Updated}/{Total} positions. Average error: {Error:F2}m.", 
-            totalNodesUpdated, totalNodes, totalError / total);
+        float averageError = totalEdges > 0 ? totalError / totalEdges : 0;
+
+        _logger?.LogInformation("UWB to GPS conversion completed. Updated {Updated}/{Total} positions. Average error: {Error:F2}m (min: {Min:F2}m, max: {Max:F2}m, edges: {Edges}).", 
+            totalNodesUpdated, totalNodes, averageError, minError == float.MaxValue ? 0 : minError, maxError, totalEdges);
         if (totalNodesUpdated + 3 < totalNodes)
         {
             var untriangulatedNodes = new List<string>();
