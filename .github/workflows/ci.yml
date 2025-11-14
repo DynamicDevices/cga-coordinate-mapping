@@ -30,7 +30,7 @@ jobs:
       run: rm -rf obj bin
       
     - name: Restore dependencies (explicit xunit)
-      run: dotnet restore tests/InstDotNet.Tests.csproj
+      run: dotnet restore InstDotNet.sln
       
     - name: Run Tests
       run: dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore --verbosity normal
