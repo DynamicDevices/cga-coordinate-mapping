@@ -58,8 +58,10 @@
 - ✅ Fixed all build warnings (unused variables, async calls)
 - ✅ Made `EdgeErrorSquared` public for unit testing
 - ✅ Fixed CI test isolation issues (logger disposal handling)
-- ✅ Fixed dependency restoration in CI (separate restore for main and test projects)
+- ✅ Fixed CI workflow - simplified restore/build/test process
+- ✅ Fixed test framework includes - explicit `using Xunit;` in all test files
 - ✅ Added ObjectDisposedException handling in UWB2GPSConverter for test robustness
+- ✅ Stable CI pipeline - all builds and tests passing reliably
 
 ## Core Functionality
 
