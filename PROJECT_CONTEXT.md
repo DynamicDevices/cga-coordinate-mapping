@@ -112,12 +112,23 @@
   - Structured logging with parameters
   - Default log level: Information
 
-#### 7. src/InstDotNet/VersionInfo.cs
+#### 7. src/VersionInfo.cs
 - **Purpose**: Version information display
 - **Data**: Semantic version, build date, git commit hash
 - **Source**: Assembly metadata injected at build time
 
-#### 8. UwbParser.py (root directory)
+#### 8. src/AppConfig.cs
+- **Purpose**: Configuration model and loader
+- **Features**: 
+  - Loads from `appsettings.json` and `appsettings.Development.json`
+  - Supports environment variable overrides
+  - Validates and binds configuration to strongly-typed models
+  - Provides defaults if configuration files are missing
+- **Purpose**: Version information display
+- **Data**: Semantic version, build date, git commit hash
+- **Source**: Assembly metadata injected at build time
+
+#### 9. UwbParser.py (root directory)
 - **Purpose**: Preprocessing tool for edge data
 - **Function**: Converts edge list format to network JSON structure
 - **Beacon Configuration**: Hardcoded beacon positions for B5A4, B57A, B98A
@@ -327,13 +338,13 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - **Test execution in CI** (automated test runs)
 
 ### 🔄 Future Improvements
-- Configuration file support (appsettings.json)
-- Retry logic for MQTT connections
+- ✅ Configuration file support (appsettings.json) - **COMPLETED**
+- ✅ Retry logic for MQTT connections - **COMPLETED**
+- ✅ Support for dynamic beacon configuration - **COMPLETED**
 - Health check endpoint
 - Metrics/monitoring
-- Support for dynamic beacon configuration (not just hardcoded)
-- Additional unit test coverage for edge cases
-- Integration tests for MQTT communication
+- Additional unit test coverage for edge cases (see CODE_COVERAGE_IMPROVEMENTS.md)
+- Integration tests for MQTT communication (see CODE_COVERAGE_IMPROVEMENTS.md)
 
 ## Build & Deployment
 
