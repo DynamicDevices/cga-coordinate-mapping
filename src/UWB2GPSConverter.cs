@@ -136,11 +136,11 @@ public class UWB2GPSConverter
                 }
             }
 
-        if (network == null || network.uwbs == null || network.uwbs.Length == 0)
-        {
-            _logger.LogError("ConvertUWBToPositions: network is null or empty.");
-            return;
-        }
+            if (network == null || network.uwbs == null || network.uwbs.Length == 0)
+            {
+                _logger.LogError("ConvertUWBToPositions: network is null or empty.");
+                return;
+            }
 
         // Apply configured beacons to network nodes
         ApplyConfiguredBeacons(network);
