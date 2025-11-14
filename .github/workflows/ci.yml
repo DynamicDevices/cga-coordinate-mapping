@@ -32,20 +32,16 @@ jobs:
       
     - name: Build and test
       run: |
-        # Restore solution to get all packages (including xunit)
-        dotnet restore InstDotNet.sln
+        # Restore solution WITH runtime identifier - this gets ALL packages including:
+        # - Runtime-specific assets for main project (net8.0/linux-arm64 or net8.0/linux-x64)
+        # - Test packages (xunit) for test project
+        # This is the key: restoring the solution with runtime includes everything needed
+        dotnet restore InstDotNet.sln -r ${{ matrix.runtime }}
         
-        # Build main project with runtime - automatically restores with runtime if needed
-        # This overwrites assets file and removes xunit, but main project is built
-        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
+        # Build main project - use --no-restore since we already restored with runtime
+        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
-        # CRITICAL: Explicitly restore test project to ensure xunit is in assets file
-        # Main project build overwrote assets, so we need to restore test project
-        # This also restores main project (via project reference) without runtime, overwriting assets
-        # This is OK because main project is already built - we don't need runtime target for test build
-        dotnet restore tests/InstDotNet.Tests.csproj --force
-        
-        # Build test project - use --no-restore since we just restored above
+        # Build test project - use --no-restore since we already restored with runtime
         dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
         # Run tests - use --no-build to use pre-built test project
