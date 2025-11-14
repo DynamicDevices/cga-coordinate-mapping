@@ -417,25 +417,26 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and tested. The current working configuration uses:
 
-1. **Restore main project dependencies** with runtime identifier
-2. **Build main project** with `--no-restore` flag
-3. **Restore all dependencies** (including test packages like xunit)
-4. **Build Tests** with `--no-restore` flag
+1. **Restore solution file** (`dotnet restore InstDotNet.sln`) - Gets all packages including test packages
+2. **Restore main project with runtime** (`dotnet restore src/InstDotNet.csproj -r runtime --force`) - Updates assets for runtime-specific build
+3. **Build main project** with `--no-restore` flag
+4. **Build test project** WITHOUT `--no-restore` flag (needs to resolve main project reference)
 5. **Run Tests** with `--no-build` flag
 
 **Why this order matters:**
-- The main project needs to be restored with the specific runtime (linux-arm64/linux-x64) first
-- Test packages (xunit, etc.) must be restored separately after the main project build
-- Using `--no-restore` and `--no-build` flags ensures packages are available when needed
+- Solution restore gets all packages (main project + test packages like xunit)
+- Main project restore with runtime and `--force` updates assets file for runtime-specific packages
+- Test project build without `--no-restore` allows it to properly resolve the main project reference (which was built with a runtime)
+- Using `--no-restore` on main build and `--no-build` on test run ensures efficiency
 - Changing this order or removing flags has caused repeated CI failures
 
 **Before modifying CI:**
 - Test locally with the exact same commands
 - Verify all 92 tests pass
 - Check that both linux-arm64 and linux-x64 builds work
-- Review git history for previous working configurations (commit 997d0c1 was stable)
+- Review git history for previous working configurations
 
-**Current stable configuration:** Commit e441c03 (2025-11-14)
+**Current stable configuration:** Commit 2b78f6b (2025-11-14)
 
 ### Target Platform
 - **Primary**: Linux ARM64 (embedded systems)
