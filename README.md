@@ -237,7 +237,7 @@ Currently, testing is done manually with `TestNodes.json`. Future improvements s
 
 ## License
 
-[Add your license here]
+This project is licensed under the GNU General Public License v3.0 (GPLv3). See the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 

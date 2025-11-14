@@ -6,9 +6,29 @@
 
 **Status**: Active Development  
 **Last Updated**: 2025-11-14  
-**Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`
+**Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`  
+**License**: GPLv3 (see LICENSE file)
 
 ## Recent Updates (2025-11-14)
+
+### Major Features Added
+- ✅ **Logging Framework**: Replaced all `Console.WriteLine` with `Microsoft.Extensions.Logging`
+  - Centralized `AppLogger` class for application-wide logging
+  - Configurable log levels via `LOG_LEVEL` environment variable
+  - Structured logging with parameters
+  - Timestamped output
+- ✅ **Unit Tests**: Comprehensive test suite with 25 tests
+  - VectorExtensions tests (11 tests)
+  - UWB2GPSConverter tests (8 tests)
+  - WGS84Converter tests (6 tests)
+  - Integrated into CI workflow
+- ✅ **Semantic Versioning**: MAJOR.MINOR.PATCH versioning
+  - Build date and git commit hash embedded in assembly
+  - Version information displayed on startup
+- ✅ **CI/CD Enhancements**: 
+  - Test execution in CI pipeline
+  - Linux x64 binary builds in addition to ARM64
+  - Automated artifact publishing
 
 ### Bug Fixes & Improvements
 - ✅ Fixed `isUpdating` flag bug - re-entrancy guard now works correctly
@@ -17,6 +37,7 @@
 - ✅ Added comprehensive null checks before processing network data
 - ✅ Optimized neighbor lookups from O(n²) to O(n) using dictionary
 - ✅ Fixed all build warnings (unused variables, async calls)
+- ✅ Made `EdgeErrorSquared` public for unit testing
 
 ## Core Functionality
 
@@ -82,7 +103,22 @@
 - **Purpose**: Vector math utilities
 - **Operations**: Normalization, cross product, dot product, distance calculations
 
-#### 6. UwbParser.py
+#### 6. Logger.cs (AppLogger)
+- **Purpose**: Centralized logging infrastructure
+- **Framework**: Microsoft.Extensions.Logging
+- **Features**:
+  - Console output with timestamps
+  - Configurable log levels (Trace, Debug, Information, Warning, Error, Critical)
+  - Environment variable configuration: `LOG_LEVEL`
+  - Structured logging with parameters
+  - Default log level: Information
+
+#### 7. VersionInfo.cs
+- **Purpose**: Version information display
+- **Data**: Semantic version, build date, git commit hash
+- **Source**: Assembly metadata injected at build time
+
+#### 8. UwbParser.py
 - **Purpose**: Preprocessing tool for edge data
 - **Function**: Converts edge list format to network JSON structure
 - **Beacon Configuration**: Hardcoded beacon positions for B5A4, B57A, B98A
@@ -98,12 +134,15 @@ graph TB
         JSON[UWB Network JSON<br/>Relative coordinates + distances]
     end
     
-    subgraph "Application"
+    subgraph "Application Core"
+        Program[Program.cs<br/>Entry Point]
         MQTTCtrl[MQTTControl.cs<br/>MQTT Client]
         UWBManager[UWBManager.cs<br/>Network Manager]
         Converter[UWB2GPSConverter.cs<br/>Trilateration Engine]
         WGS84[WGS84Converter.cs<br/>Coordinate Transform]
         Vector[VectorExtensions.cs<br/>Math Utilities]
+        Logger[Logger.cs<br/>AppLogger<br/>Logging Framework]
+        Version[VersionInfo.cs<br/>Version Display]
     end
     
     subgraph "Reference Data"
@@ -119,13 +158,25 @@ graph TB
         Filter[Filter Valid Nodes]
     end
     
+    subgraph "Testing"
+        Tests[Unit Tests<br/>25 tests total]
+        VectorTests[VectorExtensions Tests<br/>11 tests]
+        ConverterTests[UWB2GPSConverter Tests<br/>8 tests]
+        WGS84Tests[WGS84Converter Tests<br/>6 tests]
+    end
+    
     subgraph "Output"
         OutputJSON[Updated Network JSON<br/>GPS Coordinates + Confidence]
         MQTTOut[MQTT Publish]
+        Logs[Structured Logs<br/>Timestamped Output]
     end
     
     MQTT -->|Subscribe| MQTTCtrl
     JSON -->|Receive| MQTTCtrl
+    Program -->|Initialize| Logger
+    Program -->|Display| Version
+    Program -->|Start| MQTTCtrl
+    Program -->|Start| UWBManager
     MQTTCtrl -->|Message| UWBManager
     UWBManager -->|Network Data| Parse
     Parse -->|Structured Network| Converter
@@ -142,12 +193,28 @@ graph TB
     Converter -.->|Uses| WGS84
     Converter -.->|Uses| Vector
     WGS84 -.->|Uses| Vector
+    MQTTCtrl -.->|Logs| Logger
+    UWBManager -.->|Logs| Logger
+    Converter -.->|Logs| Logger
+    Program -.->|Logs| Logger
+    
+    Tests -->|Tests| Vector
+    Tests -->|Tests| Converter
+    Tests -->|Tests| WGS84
+    VectorTests -->|Validates| Vector
+    ConverterTests -->|Validates| Converter
+    WGS84Tests -->|Validates| WGS84
+    
+    Logger -->|Output| Logs
     
     style MQTT fill:#e1f5ff
     style Beacons fill:#fff4e1
     style Converter fill:#e8f5e9
     style WGS84 fill:#e8f5e9
+    style Logger fill:#fff9c4
+    style Tests fill:#e3f2fd
     style OutputJSON fill:#f3e5f5
+    style Logs fill:#fff9c4
 ```
 
 ## Data Flow
@@ -248,21 +315,26 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - Iterative refinement (gradient descent)
 - Confidence/accuracy calculation
 - ARM64 native build support
+- Linux x64 native build support
 - CI/CD pipeline (GitHub Actions)
 - Python preprocessing script
 - Re-entrancy protection (isUpdating flag)
 - Robust null checking and error handling
 - Optimized O(n) neighbor lookups using dictionary
 - Edge endpoint resolution (handles both end0 and end1)
+- **Logging framework** (Microsoft.Extensions.Logging)
+- **Unit tests** (25 tests covering core functionality)
+- **Semantic versioning** (with build date and git commit hash)
+- **Test execution in CI** (automated test runs)
 
 ### 🔄 Future Improvements
 - Configuration file support (appsettings.json)
-- Logging framework (replace Console.WriteLine)
-- Unit tests for algorithms
 - Retry logic for MQTT connections
 - Health check endpoint
 - Metrics/monitoring
 - Support for dynamic beacon configuration (not just hardcoded)
+- Additional unit test coverage for edge cases
+- Integration tests for MQTT communication
 
 ## Build & Deployment
 
@@ -286,6 +358,16 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 
 ## Testing
 
+### Unit Tests
+- **Test Framework**: xUnit
+- **Test Project**: `tests/InstDotNet.Tests/`
+- **Coverage**: 25 tests total
+  - **VectorExtensionsTests** (11 tests): Vector math operations
+  - **UWB2GPSConverterTests** (8 tests): Edge handling and error calculations
+  - **WGS84ConverterTests** (6 tests): Coordinate conversion and length calculations
+- **CI Integration**: Tests run automatically in GitHub Actions
+- **Run Tests Locally**: `dotnet test`
+
 ### Test Data
 - **TestNodes.json**: Sample network with 10 nodes
   - 3 beacons (B5A4, B57A, B98A) with known positions
@@ -298,22 +380,28 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 3. Publish test network JSON to receive topic
 4. Verify GPS coordinates calculated for unknown nodes
 5. Check confidence levels in output
+6. Review structured logs for debugging
 
 ## Related Files
 
 - `README.md`: User-facing documentation
+- `LICENSE`: GPLv3 license text
 - `TestNodes.json`: Sample test data
 - `.github/workflows/ci.yml`: CI/CD pipeline
 - `UwbParser.py`: Data preprocessing tool
+- `tests/InstDotNet.Tests/`: Unit test project
 
 ## Notes
 
 - **Coordinate System**: Uses Unity-style coordinate system internally (Y-up), converts to ENU (East-North-Up) for GPS
 - **Distance Units**: All distances in meters
 - **Update Frequency**: 10ms update loop (configurable in `Program.cs`)
-- **Error Handling**: Comprehensive null checks and error logging to console, continues on failures
+- **Error Handling**: Comprehensive null checks and structured error logging, continues on failures
+- **Logging**: Configurable via `LOG_LEVEL` environment variable (Trace, Debug, Information, Warning, Error, Critical)
 - **Thread Safety**: Re-entrancy protection via `isUpdating` flag (volatile trigger flag for thread-safe updates)
 - **Performance**: Optimized neighbor lookups using Dictionary<string, UWB> for O(1) access instead of O(n) linear search
+- **Versioning**: Semantic versioning (MAJOR.MINOR.PATCH) with build metadata (date, git commit hash)
+- **License**: GPLv3 - See LICENSE file for full terms
 
 ## Contact & Maintenance
 
