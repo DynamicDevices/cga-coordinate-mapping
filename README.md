@@ -88,10 +88,10 @@ The application uses `appsettings.json` for configuration. A development overrid
 **Location**: `src/appsettings.json`
 
 **Configuration Sections**:
-- **MQTT**: Server address, port, topics, credentials, retry settings, auto-reconnect
+- **MQTT**: Server address, port, topics, credentials, retry settings, auto-reconnect, TLS/SSL settings
 - **Application**: Update interval, log level
 - **Algorithm**: Max iterations, learning rate, refinement enabled/disabled
-- **Beacons**: Dynamic beacon GPS coordinates (replaces hardcoded values)
+- **Beacons**: Optional beacon GPS coordinates (can be empty - beacons can be provided via MQTT data instead)
 
 **Environment Variables**: All settings can be overridden via environment variables (e.g., `MQTT__ServerAddress`, `Application__LogLevel`).
 

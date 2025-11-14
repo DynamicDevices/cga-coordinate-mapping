@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Purpose**: Convert relative coordinates from Ultra-Wideband (UWB) devices into absolute GPS coordinates with confidence levels, using hardcoded beacon/tag locations as reference points.
+**Purpose**: Convert relative coordinates from Ultra-Wideband (UWB) devices into absolute GPS coordinates with confidence levels, using known beacon/tag locations (provided via configuration or MQTT data) as reference points.
 
 **Status**: Active Development  
 **Last Updated**: 2025-11-14  
@@ -17,7 +17,7 @@
   - Configurable log levels via `LOG_LEVEL` environment variable or `appsettings.json`
   - Structured logging with parameters
   - Timestamped output
-- ✅ **Unit Tests**: Comprehensive test suite with **57 tests** (all passing)
+- ✅ **Unit Tests**: Comprehensive test suite with **92 tests** (all passing)
   - VectorExtensions tests (11 tests)
   - UWB2GPSConverter tests (8 tests)
   - WGS84Converter tests (6 tests)
@@ -38,7 +38,8 @@
   - Test isolation fixes (logger disposal handling)
 - ✅ **Configuration Management**: 
   - `appsettings.json` support for MQTT, application, and algorithm settings
-  - Dynamic beacon configuration from configuration file
+  - Dynamic beacon configuration from configuration file (optional)
+  - **Beacon support from MQTT data** - beacons can be provided dynamically via MQTT messages
   - Environment variable overrides
 - ✅ **MQTT Resilience**:
   - Exponential backoff retry logic for initial connection
@@ -289,28 +290,54 @@ Serialize to JSON
 MQTT Publish
 ```
 
-## Hardcoded Beacon Locations
+## Beacon Configuration
 
-The system relies on **hardcoded beacon/tag locations** with known GPS coordinates:
+The system supports **two methods** for providing beacon locations:
 
-| Beacon ID | Latitude | Longitude | Altitude (m) |
-|-----------|----------|-----------|--------------|
-| B5A4      | 53.48514639104522 | -2.191785053920114 | 0.0 |
-| B57A      | 53.48545891792991 | -2.19232588314793 | 0.0 |
-| B98A      | 53.485994341662628 | -2.192366069038485 | 0.0 |
+### 1. Configuration File (Optional)
+Beacons can be pre-configured in `appsettings.json`:
+```json
+"Beacons": [
+  {
+    "Id": "B5A4",
+    "Latitude": 53.48514639104522,
+    "Longitude": -2.191785053920114,
+    "Altitude": 0.0
+  }
+]
+```
 
-**Location**: Manchester, UK area (approximately)
+### 2. MQTT Data (Recommended)
+Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown: true` and valid `latLonAlt` coordinates are automatically recognized as beacons:
 
-These beacons serve as **reference points** for the trilateration algorithm. All other node positions are calculated relative to these fixed points.
+```json
+{
+  "uwbs": [
+    {
+      "id": "B5A4",
+      "positionKnown": true,
+      "latLonAlt": [53.48514639104522, -2.191785053920114, 0.0],
+      "edges": []
+    }
+  ]
+}
+```
+
+**Default Configuration**: The `appsettings.json` file has an empty `Beacons` array by default, expecting beacons to be provided via MQTT data.
+
+**Reference Point**: The first node with `positionKnown = true` and valid `latLonAlt` becomes the reference point (origin at 0,0,0 in local 3D space). All other positions are calculated relative to this reference.
+
+**Requirements**: At least 3 beacons are required for trilateration. These can come from configuration, MQTT data, or a combination of both.
 
 ## Algorithm Details
 
 ### Trilateration Process
 
 1. **Initial Setup**:
-   - Identify all nodes with `positionKnown: true` (beacons)
+   - Identify all nodes with `positionKnown: true` (beacons from configuration or MQTT data)
    - Verify at least 3 beacons exist
-   - Convert beacon GPS coordinates to local 3D space using WGS84 transformations
+   - Find first known node to use as reference point
+   - Convert all beacon GPS coordinates to local 3D space using WGS84 transformations
 
 2. **Position Calculation**:
    - For each unknown node:
@@ -320,7 +347,7 @@ These beacons serve as **reference points** for the trilateration algorithm. All
      - Handle collinear cases (error if nodes are too close/collinear)
 
 3. **Coordinate Conversion**:
-   - Use reference beacon's GPS position as origin
+   - Use first known node's GPS position as origin (reference point)
    - Transform calculated 3D offset to GPS coordinates
    - Apply WGS84 ellipsoid corrections
 
@@ -371,6 +398,7 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - ✅ Configuration file support (appsettings.json) - **COMPLETED**
 - ✅ Retry logic for MQTT connections - **COMPLETED**
 - ✅ Support for dynamic beacon configuration - **COMPLETED**
+- ✅ Support for beacons from MQTT data - **COMPLETED**
 - Health check endpoint
 - Metrics/monitoring
 - Additional unit test coverage for edge cases (see CODE_COVERAGE_IMPROVEMENTS.md)
@@ -401,16 +429,20 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 ### Unit Tests
 - **Test Framework**: xUnit
 - **Test Project**: `tests/InstDotNet.Tests/`
-- **Coverage**: **57 tests total** (all passing ✅)
+- **Coverage**: **92 tests total** (all passing ✅)
   - **VectorExtensionsTests** (11 tests): Vector math operations
   - **UWB2GPSConverterTests** (8 tests): Edge handling and error calculations
   - **WGS84ConverterTests** (6 tests): Coordinate conversion and length calculations
-  - **AppConfigTests** (6 tests): Configuration loading and validation
-  - **AppLoggerTests** (7 tests): Logging framework initialization and log level parsing
+  - **AppConfigTests** (7 tests): Configuration loading and validation
+  - **AppLoggerTests** (9 tests): Logging framework initialization and log level parsing
   - **VersionInfoTests** (6 tests): Version information retrieval
-  - **TrilaterationTests** (13 tests): Core trilateration algorithm, beacon initialization, refinement
+  - **TrilaterationTests** (10 tests): Core trilateration algorithm, beacon initialization, refinement
+  - **HardwareIdTests** (14 tests): Hardware ID generation and MQTT client ID sanitization
+  - **MQTTControlTests** (11 tests): Message handling, event subscription, constants
+  - **UWBManagerTests** (10 tests): Initialization, message parsing, update logic
 - **CI Integration**: Tests run automatically in GitHub Actions for both linux-arm64 and linux-x64
-- **Test Status**: All 57 tests passing in CI ✅
+- **Test Status**: All 92 tests passing in CI ✅
+- **Code Coverage**: 53.1% line coverage, 40.6% branch coverage
 - **Run Tests Locally**: `dotnet test`
 
 ### Test Data
