@@ -440,6 +440,13 @@ The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and t
 
 **Current stable configuration:** Commit 2b78f6b (2025-11-14)
 
+**Known Issue - Intermittent Test Failures:**
+- Tests may fail intermittently due to race conditions with static state
+- Static state includes: `AppLogger`, `MQTTControl.OnMessageReceived`, `UWB2GPSConverter._configuredBeacons`
+- **Fix applied**: Disabled parallel test execution (`xUnitDisableParallelTestExecution=true`) to ensure test isolation
+- All test classes that modify static state use `[Collection("LoggerTests")]` to run sequentially
+- If CI fails intermittently, check for test isolation issues first
+
 **⚠️ IMPORTANT: This CI configuration is working correctly. DO NOT modify it unless there is a critical need. The CI has been broken multiple times in the past by unnecessary changes. If you must modify it:**
 1. Test locally with the exact same commands first
 2. Verify all 92 tests pass locally

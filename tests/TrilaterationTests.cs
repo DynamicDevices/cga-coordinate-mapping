@@ -6,6 +6,7 @@ using Xunit;
 
 namespace InstDotNet.Tests;
 
+[Collection("LoggerTests")] // Run tests sequentially to avoid static state conflicts (beacon initialization, logger)
 public class TrilaterationTests
 {
     [Fact]
