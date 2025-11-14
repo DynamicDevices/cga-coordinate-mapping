@@ -1,0 +1,134 @@
+# CGA Coordinate Mapping - Cursor Rules
+
+## Pre-Commit Requirements
+
+### CRITICAL: Documentation and Context Updates
+
+**Before committing ANY code changes, you MUST:**
+
+1. **Update PROJECT_CONTEXT.md**:
+   - Add new features/changes to the "Recent Updates" section at the top
+   - Update version number if making a release
+   - Update "Last Updated" date
+   - Update component descriptions if functionality changed
+   - Update "Current Implementation Status" section
+   - Update test counts if tests were added/removed
+   - Document any breaking changes or deprecations
+
+2. **Update Mermaid Diagram** (in PROJECT_CONTEXT.md):
+   - If adding/removing components: Update the "Application Core" subgraph
+   - If changing data flow: Update the arrow connections between components
+   - If adding new features: Add new nodes/subgraphs as needed
+   - If changing processing pipeline: Update the "Processing Pipeline" subgraph
+   - **The Mermaid diagram MUST accurately reflect the current architecture**
+   - Check that all components mentioned in code are represented in the diagram
+
+3. **Update README.md** (if applicable):
+   - Update feature list if new features added
+   - Update usage instructions if behavior changed
+   - Update badges/version numbers
+   - Update configuration examples if config changed
+
+4. **Version Management**:
+   - Update version in `src/InstDotNet.csproj` when creating a release
+   - Follow semantic versioning (MAJOR.MINOR.PATCH)
+   - Update PROJECT_CONTEXT.md version and release link
+   - Create a release tag with `gh release create` for production releases
+
+## Code Quality Standards
+
+### Commit Messages
+- Use format: `vX.Y.Z: Brief description`
+- Include detailed description of changes
+- Reference issues/PRs if applicable
+- Group related changes together
+
+### Code Changes
+- All code must compile without warnings (TreatWarningsAsErrors=true)
+- All tests must pass (92 tests currently)
+- Follow existing code style and patterns
+- Add unit tests for new functionality
+- Update test counts in PROJECT_CONTEXT.md when adding tests
+
+### CI/CD
+- **DO NOT modify `.github/workflows/ci.yml` without explicit approval**
+- CI is stable and working - changes have caused issues in the past
+- Test locally before pushing to ensure CI will pass
+
+## Architecture Documentation
+
+### When to Update Mermaid Diagram
+- Adding new source files (e.g., HealthCheck.cs, HealthCheckServer.cs)
+- Changing component relationships or data flow
+- Adding new subgraphs (e.g., Health Check, Docker)
+- Modifying processing pipeline steps
+- Adding new input/output mechanisms
+
+### Mermaid Diagram Structure
+The diagram should include:
+- **Input**: MQTT Broker, JSON data
+- **Application Core**: All source files in src/
+- **Reference Data**: Beacons configuration
+- **Processing Pipeline**: Steps from parse to filter
+- **Testing**: Test suites and coverage
+- **Output**: MQTT publish, logs
+
+### Component Naming
+- Use descriptive names matching source file names
+- Include brief purpose in node labels (e.g., "MQTTControl.cs<br/>MQTT Client")
+- Use consistent formatting across all nodes
+
+## Pre-Commit Checklist
+
+Before committing, verify:
+- [ ] PROJECT_CONTEXT.md updated with changes
+- [ ] Mermaid diagram reflects current architecture
+- [ ] Version updated if making a release
+- [ ] README.md updated if needed
+- [ ] All tests pass locally
+- [ ] Code compiles without warnings
+- [ ] Commit message follows format
+- [ ] Changes are logically grouped
+
+## File-Specific Rules
+
+### PROJECT_CONTEXT.md
+- Keep "Recent Updates" section at the top with latest changes first
+- Maintain chronological order of updates
+- Include dates for all updates
+- Update version and release link when versioning
+- Keep component descriptions accurate and up-to-date
+- Update test counts when tests are added/removed
+
+### src/InstDotNet.csproj
+- Update version numbers together (Version, AssemblyVersion, FileVersion, VersionPrefix)
+- Never commit with version suffix unless it's a pre-release
+
+### .github/workflows/ci.yml
+- **CRITICAL**: Do not modify without explicit user approval
+- CI has been stable since v1.3.0 - changes have caused failures
+- If modification is needed, test thoroughly locally first
+
+## Testing Requirements
+
+- All new features must have corresponding unit tests
+- Test coverage should be maintained or improved
+- Update test counts in PROJECT_CONTEXT.md
+- Run `dotnet test` before committing
+
+## Documentation Standards
+
+- Use clear, concise language
+- Include code examples where helpful
+- Keep diagrams and code in sync
+- Document breaking changes prominently
+- Update "Last Updated" date when modifying documentation
+
+## Reminders
+
+- **Always update PROJECT_CONTEXT.md before committing**
+- **Always update Mermaid diagram when architecture changes**
+- **Always run tests before committing**
+- **Always check CI will pass before pushing**
+- **Never modify CI workflow without approval**
+
