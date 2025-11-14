@@ -38,16 +38,18 @@ jobs:
         
     - name: Build and test
       run: |
-        # CRITICAL: Restore solution WITHOUT runtime first - this restores ALL projects including test project
-        # This ensures xunit packages are in the assets file for the test project
-        dotnet restore InstDotNet.sln
+        # CRITICAL: Restore test project FIRST (without runtime) - gets xunit into assets file
+        # The test project doesn't need a runtime identifier
+        dotnet restore tests/InstDotNet.Tests.csproj
         
-        # Build main project WITH runtime - this will implicitly restore with runtime if needed
-        # The build process will handle the runtime-specific restore without overwriting
-        # the solution-level assets that include test project dependencies
-        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
+        # CRITICAL: Restore main project WITH runtime - adds runtime target to existing assets
+        # When both projects share obj directory, this should merge dependencies
+        dotnet restore src/InstDotNet.csproj -r ${{ matrix.runtime }}
         
-        # Build test project - it should use the assets from solution restore
+        # Build main project - use --no-restore since we already restored
+        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
+        
+        # Build test project - use --no-restore since we already restored
         dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
         # Run tests - use --no-build to use pre-built test project
