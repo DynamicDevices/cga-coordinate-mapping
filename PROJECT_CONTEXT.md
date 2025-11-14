@@ -417,26 +417,37 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 **The CI is currently working and all tests pass. Any changes to `.github/workflows/ci.yml` risk breaking the build pipeline. Only modify if absolutely necessary and after extensive local testing.**
 
-The CI workflow (`.github/workflows/ci.yml`) has been simplified to the absolute minimum for maximum reliability. The current working configuration uses:
+The CI workflow (`.github/workflows/ci.yml`) uses a carefully sequenced restore/build pattern to handle the shared `obj` directory issue. The current working configuration uses:
 
-1. **Build main project** (`dotnet build src/InstDotNet.csproj -r runtime`) - Automatically restores and builds with runtime identifier
-2. **Run tests** (`dotnet test tests/InstDotNet.Tests.csproj`) - Automatically restores, builds, and runs tests
+1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Gets all packages including xunit
+2. **Build main project** (`dotnet build src/InstDotNet.csproj -r runtime`) - Builds with runtime, may restore again
+3. **Restore test project** (`dotnet restore tests/InstDotNet.Tests.csproj --force`) - **CRITICAL**: Ensures xunit is in assets file after main project restore may have overwritten it
+4. **Build test project** (`dotnet build tests/InstDotNet.Tests.csproj --no-restore`) - Uses packages from restore above
+5. **Run tests** (`dotnet test --no-build`) - Uses pre-built test project
 
 **Why this is reliable:**
-- `dotnet build` and `dotnet test` automatically handle restore - no manual restore steps needed
-- No `--no-restore` or `--no-build` flags that can cause conflicts
-- Minimal steps - just 2 commands
-- Standard .NET pattern that works consistently
+- Solution restore gets all packages upfront
+- Main project build gets runtime-specific assets
+- **Explicit test project restore with --force ensures xunit is always in assets file** (this is the key fix)
+- Test build uses `--no-restore` to avoid overwriting assets
+- Test run uses `--no-build` to use pre-built project
 - All steps in one script block for atomic execution
-- No complex restore/build sequences that can cause race conditions
+- Tested with both linux-arm64 and linux-x64
+
+**Root Cause Analysis:**
+- Both projects share the same `obj` directory (via `Directory.Build.props`)
+- They share the same `project.assets.json` file
+- When main project restores with runtime, it also restores test project (via project reference), overwriting assets file
+- This can remove xunit packages from the assets file
+- **Solution**: Explicitly restore test project AFTER main project build to ensure xunit is always present
 
 **Before modifying CI:**
 - Test locally with the exact same commands
 - Verify all 92 tests pass
-- Check that both linux-arm64 and linux-x64 builds work
+- Test both linux-arm64 and linux-x64 builds locally
 - Review git history for previous working configurations
 
-**Current stable configuration:** Commit 2b78f6b (2025-11-14)
+**Current stable configuration:** Commit (latest) - 5-step restore/build sequence
 
 **Known Issue - Intermittent Test Failures:**
 - Tests may fail intermittently due to race conditions with static state
