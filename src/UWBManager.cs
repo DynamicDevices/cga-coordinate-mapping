@@ -30,15 +30,19 @@ public class UWBManager
             PropertyNameCaseInsensitive = true,
             NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
         };
-        MQTTControl.OnMessageReceived -= UpdateUwbsFromMessage;
-        MQTTControl.OnMessageReceived += UpdateUwbsFromMessage;
-        
-        // Initialize beacons from configuration
-        if (_config?.Beacons != null && _config.Beacons.Count > 0)
-        {
-            UWB2GPSConverter.InitializeBeacons(_config.Beacons);
-            _logger?.LogInformation("Initialized {Count} beacons from configuration", _config.Beacons.Count);
-        }
+            MQTTControl.OnMessageReceived -= UpdateUwbsFromMessage;
+            MQTTControl.OnMessageReceived += UpdateUwbsFromMessage;
+            
+            // Initialize beacons from configuration (optional - beacons can also come from MQTT data)
+            if (_config?.Beacons != null && _config.Beacons.Count > 0)
+            {
+                UWB2GPSConverter.InitializeBeacons(_config.Beacons);
+                _logger?.LogInformation("Initialized {Count} beacons from configuration", _config.Beacons.Count);
+            }
+            else
+            {
+                _logger?.LogInformation("No beacons configured - expecting beacons to be provided via MQTT data with positionKnown = true and latLonAlt coordinates");
+            }
         
         // network will be set when message received
     }

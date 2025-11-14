@@ -84,39 +84,76 @@ public class UWB2GPSConverter
 
     /// <summary>
     /// Apply configured beacon positions to network nodes that match beacon IDs.
+    /// Also converts GPS coordinates to 3D positions for all nodes with positionKnown = true.
     /// </summary>
     private static void ApplyConfiguredBeacons(Network network)
     {
-        if (_configuredBeacons == null || network.uwbs == null)
+        if (network.uwbs == null)
         {
             return;
         }
 
+        // First, apply configured beacons if available
+        if (_configuredBeacons != null)
+        {
+            foreach (var node in network.uwbs)
+            {
+                if (node == null || string.IsNullOrEmpty(node.id))
+                {
+                    continue;
+                }
+
+                if (_configuredBeacons.TryGetValue(node.id, out var beacon))
+                {
+                    // Set as known position from configuration
+                    node.positionKnown = true;
+                    node.latLonAlt = new double[] { beacon.Latitude, beacon.Longitude, beacon.Altitude };
+                }
+            }
+        }
+
+        // Find the first node with positionKnown = true and valid latLonAlt to use as reference
+        UWB? referenceNode = null;
         foreach (var node in network.uwbs)
         {
-            if (node == null || string.IsNullOrEmpty(node.id))
+            if (node != null && node.positionKnown && 
+                node.latLonAlt != null && node.latLonAlt.Length >= 3)
+            {
+                referenceNode = node;
+                break;
+            }
+        }
+
+        if (referenceNode == null)
+        {
+            _logger?.LogWarning("No reference node found with positionKnown = true and valid latLonAlt. Cannot convert GPS to 3D positions.");
+            return;
+        }
+
+        double refLat = referenceNode.latLonAlt[0];
+        double refLon = referenceNode.latLonAlt[1];
+        double refAlt = referenceNode.latLonAlt[2];
+        Vector3 refPoint = new Vector3(0, 0, 0); // Reference point in Unity space
+
+        // Convert GPS to local 3D position for all nodes with positionKnown = true
+        foreach (var node in network.uwbs)
+        {
+            if (node == null || !node.positionKnown)
             {
                 continue;
             }
 
-            if (_configuredBeacons.TryGetValue(node.id, out var beacon))
+            if (node.latLonAlt == null || node.latLonAlt.Length < 3)
             {
-                // Set as known position
-                node.positionKnown = true;
-                node.latLonAlt = new double[] { beacon.Latitude, beacon.Longitude, beacon.Altitude };
-                
-                // Convert GPS to local 3D position using first beacon as reference
-                // For now, we'll use the first configured beacon as reference
-                if (network.uwbs.Length > 0)
-                {
-                    var firstBeacon = _configuredBeacons.Values.First();
-                    var refPoint = new Vector3(0, 0, 0); // Reference point in Unity space
-                    node.position = WGS84Converter.LatLonAltkm2UnityPos(
-                        firstBeacon.Latitude, firstBeacon.Longitude, firstBeacon.Altitude / 1000.0,
-                        beacon.Latitude, beacon.Longitude, beacon.Altitude / 1000.0,
-                        refPoint);
-                }
+                _logger?.LogWarning("Node {NodeId} has positionKnown = true but invalid latLonAlt", node.id);
+                continue;
             }
+
+            // Convert GPS to local 3D position using reference node
+            node.position = WGS84Converter.LatLonAltkm2UnityPos(
+                refLat, refLon, refAlt / 1000.0,
+                node.latLonAlt[0], node.latLonAlt[1], node.latLonAlt[2] / 1000.0,
+                refPoint);
         }
     }
 
