@@ -39,6 +39,7 @@ jobs:
         # CRITICAL: Restore main project WITH runtime - this ADDS runtime target to existing assets file
         # When both projects share the same obj directory, restoring the second project
         # merges its dependencies into the existing assets file (doesn't overwrite)
+        # NOTE: Test project build will restore itself if needed to ensure xunit is available
         dotnet restore src/InstDotNet.csproj -r ${{ matrix.runtime }}
         
         # Build main project - use --no-restore since we already restored
