@@ -241,7 +241,12 @@ This project is licensed under the GNU General Public License v3.0 (GPLv3). See 
 
 ## Contributing
 
-[Add contribution guidelines here]
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Important Notes:**
+- All contributions must be submitted via Pull Request (PR)
+- Copyright must be assigned to the project maintainers
+- Please ensure all tests pass and documentation is updated
 
 ## Authors
 
