@@ -411,6 +411,32 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 ## Build & Deployment
 
+### ⚠️ CRITICAL: CI Configuration Stability
+
+**DO NOT MODIFY THE CI WORKFLOW WITHOUT EXTENSIVE TESTING**
+
+The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and tested. The current working configuration uses:
+
+1. **Restore main project dependencies** with runtime identifier
+2. **Build main project** with `--no-restore` flag
+3. **Restore all dependencies** (including test packages like xunit)
+4. **Build Tests** with `--no-restore` flag
+5. **Run Tests** with `--no-build` flag
+
+**Why this order matters:**
+- The main project needs to be restored with the specific runtime (linux-arm64/linux-x64) first
+- Test packages (xunit, etc.) must be restored separately after the main project build
+- Using `--no-restore` and `--no-build` flags ensures packages are available when needed
+- Changing this order or removing flags has caused repeated CI failures
+
+**Before modifying CI:**
+- Test locally with the exact same commands
+- Verify all 92 tests pass
+- Check that both linux-arm64 and linux-x64 builds work
+- Review git history for previous working configurations (commit 997d0c1 was stable)
+
+**Current stable configuration:** Commit e441c03 (2025-11-14)
+
 ### Target Platform
 - **Primary**: Linux ARM64 (embedded systems)
 - **Build Tool**: .NET 8.0 SDK
@@ -486,6 +512,7 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 - **Performance**: Optimized neighbor lookups using Dictionary<string, UWB> for O(1) access instead of O(n) linear search
 - **Versioning**: Semantic versioning (MAJOR.MINOR.PATCH) with build metadata (date, git commit hash)
 - **License**: GPLv3 - See LICENSE file for full terms
+- **CI Stability**: The CI workflow configuration is critical - see "CI Configuration Stability" section above before making changes
 
 ## Contact & Maintenance
 
