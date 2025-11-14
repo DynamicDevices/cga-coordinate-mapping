@@ -19,7 +19,7 @@ public class MQTTControl
     public const int DEFAULT_TIMEOUT_IN_SECONDS = 10; //not currently being used - need to for safety?
     private static string _clientId;
     private static string _serverAddress;
-    private static string _usernname;
+    private static string _username;
     private static string _password;
     private static int _port;
     private static string _receiveMessageTopic;
@@ -47,7 +47,7 @@ public class MQTTControl
         _clientId = clientId;
         _serverAddress = serverAddress;
         _port = port;
-        _usernname = username;
+        _username = username;
         _password = password;
         _receiveMessageTopic = receiveMessageTopic;
         _sendMessageTopic = sendMessageTopic;
@@ -93,9 +93,9 @@ public class MQTTControl
             .WithCleanSession();
 
         // Add credentials only if provided
-        if (!string.IsNullOrWhiteSpace(_usernname) && !string.IsNullOrWhiteSpace(_password))
+        if (!string.IsNullOrWhiteSpace(_username) && !string.IsNullOrWhiteSpace(_password))
         {
-            builder = builder.WithCredentials(_usernname, _password);
+            builder = builder.WithCredentials(_username, _password);
         }
 
         var options = builder.Build();

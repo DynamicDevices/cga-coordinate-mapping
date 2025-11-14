@@ -59,8 +59,24 @@ public class UWB2GPSConverter
 
     public static void ConvertUWBToPositions(Network network, bool refine)
     {
+        if (network == null || network.uwbs == null || network.uwbs.Length == 0)
+        {
+            Console.Error.WriteLine("ConvertUWBToPositions: network is null or empty.");
+            return;
+        }
+
         float timeNow = (float)DateTime.UtcNow.TimeOfDay.TotalSeconds;
         UWB[] allNodes = network.uwbs;
+
+        // Create dictionary for O(1) node lookups
+        Dictionary<string, UWB> nodeMap = new Dictionary<string, UWB>();
+        foreach (UWB node in allNodes)
+        {
+            if (node != null && !string.IsNullOrEmpty(node.id))
+            {
+                nodeMap[node.id] = node;
+            }
+        }
 
         // First pass - get initial positions using trilateration
         // 1. Find all unique nodes in the network
@@ -101,7 +117,7 @@ public class UWB2GPSConverter
                 int index = 0;
                 foreach (Edge edge in node.edges)
                 {
-                    if (TryGetEndFromEdge(edge, network, out UWB end))
+                    if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB end))
                     {
                         if (end.positionKnown || end.lastPositionUpdateTime == timeNow)
                         {
@@ -119,6 +135,11 @@ public class UWB2GPSConverter
                     continue;
                 }
                 //Get latLonAlt ref point from the first known node
+                if (triangulationNodes[0].latLonAlt == null || triangulationNodes[0].latLonAlt.Length < 3)
+                {
+                    Console.Error.WriteLine($"Node {triangulationNodes[0].id} has invalid latLonAlt, skipping triangulation for {node.id}");
+                    continue;
+                }
                 double refPointLat = triangulationNodes[0].latLonAlt[0];
                 double refPointLon = triangulationNodes[0].latLonAlt[1];
                 double refPointAlt = triangulationNodes[0].latLonAlt[2];
@@ -180,14 +201,8 @@ public class UWB2GPSConverter
                     // Calculate gradient based on distance constraints
                     foreach (Edge edge in node.edges)
                     {
-                        UWB neighbour = null;
-                        foreach (UWB other in allNodes)
-                        {
-                            if (other.id == edge.end1)
-                            {
-                                neighbour = other;
-                            }
-                        }
+                        if (!TryGetEndFromEdge(edge, node.id, nodeMap, out UWB neighbour))
+                            continue;
 
                         if (neighbour == null || !neighbour.lastPositionUpdateTime.Equals(timeNow)) continue;
 
@@ -202,9 +217,9 @@ public class UWB2GPSConverter
                     Vector3 newPos = node.position - gradient * LEARNING_RATE;
 
                     // Check if new position reduces total error
-                    float oldError = NodeError(node, network);
+                    float oldError = NodeError(node, network, nodeMap);
                     node.position = newPos;
-                    float newError = NodeError(node, network);
+                    float newError = NodeError(node, network, nodeMap);
 
                     if (newError < oldError)
                     {
@@ -226,7 +241,7 @@ public class UWB2GPSConverter
         float total = 0;
         foreach (UWB node in network.uwbs)
         {
-            totalError += NodeError(node, network);
+            totalError += NodeError(node, network, nodeMap);
             total++;
         }
         total *= 0.5f;
@@ -247,12 +262,12 @@ public class UWB2GPSConverter
 
     }
 
-    private static float NodeError(UWB node, Network network)
+    private static float NodeError(UWB node, Network network, Dictionary<string, UWB> nodeMap)
     {
         float totalError = 0;
         foreach (Edge edge in node.edges)
         {
-            if (TryGetEndFromEdge(edge, network, out UWB end))
+            if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB end))
             {
                 totalError += EdgeErrorSquared(node, end, edge.distance);
             }
@@ -269,14 +284,46 @@ public class UWB2GPSConverter
         return error * error; // Squared error
     }
 
+    public static bool TryGetEndFromEdge(Edge edge, string currentNodeId, Dictionary<string, UWB> nodeMap, out UWB end)
+    {
+        end = null;
+        if (edge == null || string.IsNullOrEmpty(currentNodeId) || nodeMap == null) return false;
+
+        // Find the OTHER end of the edge (not the current node)
+        string otherEndId = null;
+        if (edge.end0 == currentNodeId)
+        {
+            otherEndId = edge.end1;
+        }
+        else if (edge.end1 == currentNodeId)
+        {
+            otherEndId = edge.end0;
+        }
+        else
+        {
+            // Current node is not in this edge, return false
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(otherEndId) || !nodeMap.TryGetValue(otherEndId, out end))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Legacy overload for backward compatibility (uses O(n) lookup)
     public static bool TryGetEndFromEdge(Edge edge, Network network, out UWB end)
     {
         end = null;
-        if (network == null || network.uwbs == null) return false;
+        if (network == null || network.uwbs == null || edge == null) return false;
 
+        // This is a fallback - we don't know which node is calling, so check both ends
+        // This is less efficient but maintains backward compatibility
         foreach (UWB node in network.uwbs)
         {
-            if (node.id == edge.end1)
+            if (node.id == edge.end0 || node.id == edge.end1)
             {
                 end = node;
                 return true;

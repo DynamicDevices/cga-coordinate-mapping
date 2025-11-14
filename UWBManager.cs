@@ -62,6 +62,15 @@ public class UWBManager
             return;
         }
 
+        isUpdating = true;
+
+        if (network == null || network.uwbs == null || network.uwbs.Length == 0)
+        {
+            Console.WriteLine("UpdateUwbs: network is null or empty, skipping update.");
+            isUpdating = false;
+            return;
+        }
+
         UWB2GPSConverter.ConvertUWBToPositions(network, true);
 
         if (sendUwbsList == null)
