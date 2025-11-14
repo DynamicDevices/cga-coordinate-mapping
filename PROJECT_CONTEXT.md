@@ -173,7 +173,7 @@ graph TB
     end
     
     subgraph "Reference Data"
-        Beacons[Configured Beacons<br/>From appsettings.json<br/>GPS Coordinates]
+        Beacons[Beacons<br/>From appsettings.json<br/>OR MQTT Data<br/>GPS Coordinates]
     end
     
     subgraph "Processing Pipeline"
@@ -186,7 +186,7 @@ graph TB
     end
     
     subgraph "Testing"
-        Tests[Unit Tests<br/>57 tests total<br/>All passing ✅]
+        Tests[Unit Tests<br/>92 tests total<br/>All passing ✅]
         VectorTests[VectorExtensions Tests<br/>11 tests]
         ConverterTests[UWB2GPSConverter Tests<br/>8 tests]
         WGS84Tests[WGS84Converter Tests<br/>6 tests]
@@ -266,7 +266,7 @@ Parse Network Structure
     ↓
 UWB2GPSConverter.ConvertUWBToPositions()
     ↓
-1. Identify 3+ Known Beacons (hardcoded GPS positions)
+1. Identify 3+ Known Beacons (from config or MQTT data)
     ↓
 2. Trilateration Loop:
    - For each unknown node
@@ -387,7 +387,7 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 - Optimized O(n) neighbor lookups using dictionary
 - Edge endpoint resolution (handles both end0 and end1)
 - **Logging framework** (Microsoft.Extensions.Logging)
-- **Unit tests** (57 tests covering core functionality - all passing ✅)
+- **Unit tests** (92 tests covering core functionality - all passing ✅)
 - **Semantic versioning** (with build date and git commit hash)
 - **Test execution in CI** (automated test runs for both platforms)
 - **Configuration file support** (appsettings.json with environment variable overrides)

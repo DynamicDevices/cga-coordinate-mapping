@@ -138,6 +138,8 @@ The application expects JSON messages in the following format:
 
 **Requirements:**
 - At least 3 nodes must have `positionKnown: true` with valid `latLonAlt` coordinates (beacons)
+  - Beacons can be provided via MQTT data (recommended) or pre-configured in `appsettings.json`
+  - If using MQTT data, set `positionKnown: true` and include `latLonAlt: [latitude, longitude, altitude]` for each beacon
 - Each node should have edges connecting to other nodes with distance measurements
 - Distances are in meters
 
@@ -187,6 +189,8 @@ This reads edge data from `test_uwbs.json` and generates `uwb_network.json`.
 
 The system uses 3D trilateration to calculate positions:
 1. Requires 3 known reference points (beacons) with GPS coordinates
+   - Beacons can be provided via MQTT data (set `positionKnown: true` with `latLonAlt` coordinates)
+   - Or pre-configured in `appsettings.json` (optional)
 2. Uses distance measurements from unknown nodes to known nodes
 3. Calculates intersection of spheres to determine position
 4. Converts local 3D coordinates to GPS using WGS84 transformations
@@ -243,7 +247,7 @@ After initial trilateration, the system applies gradient descent optimization:
 
 ### Testing
 
-**Unit Tests**: Comprehensive test suite with **57 tests** (all passing ✅)
+**Unit Tests**: Comprehensive test suite with **92 tests** (all passing ✅)
 - Vector math operations (11 tests)
 - Trilateration algorithms (13 tests)
 - Coordinate conversions (6 tests)
@@ -273,7 +277,8 @@ dotnet test
 
 ### Position Calculation Failures
 
-- Ensure at least 3 beacons have `positionKnown: true`
+- Ensure at least 3 beacons have `positionKnown: true` with valid `latLonAlt` coordinates
+- Beacons can be provided via MQTT data or pre-configured in `appsettings.json`
 - Verify beacon GPS coordinates are valid
 - Check that distance measurements are reasonable
 - Review console output for triangulation errors
