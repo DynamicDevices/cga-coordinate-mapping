@@ -61,26 +61,32 @@ public class AppLoggerTests
     [Fact]
     public void Initialize_WithDifferentLevels_SetsCorrectMinimum()
     {
-        // Arrange
+        // Arrange - Ensure clean state by disposing first
         AppLogger.Dispose();
+        
+        // Small delay to ensure disposal is complete (helps with test isolation)
+        System.Threading.Thread.Sleep(10);
 
         try
         {
             // Act & Assert - Debug level
             AppLogger.Initialize(LogLevel.Debug);
             var logger1 = AppLogger.GetLogger<AppLoggerTests>();
-            Assert.True(logger1.IsEnabled(LogLevel.Debug));
-            Assert.True(logger1.IsEnabled(LogLevel.Information));
-            Assert.False(logger1.IsEnabled(LogLevel.Trace));
+            Assert.NotNull(logger1);
+            Assert.True(logger1.IsEnabled(LogLevel.Debug), "Debug level should be enabled");
+            Assert.True(logger1.IsEnabled(LogLevel.Information), "Information level should be enabled when Debug is minimum");
+            Assert.False(logger1.IsEnabled(LogLevel.Trace), "Trace level should not be enabled when Debug is minimum");
 
             AppLogger.Dispose();
+            System.Threading.Thread.Sleep(10);
 
             // Act & Assert - Warning level
             AppLogger.Initialize(LogLevel.Warning);
             var logger2 = AppLogger.GetLogger<AppLoggerTests>();
-            Assert.True(logger2.IsEnabled(LogLevel.Warning));
-            Assert.True(logger2.IsEnabled(LogLevel.Error));
-            Assert.False(logger2.IsEnabled(LogLevel.Information));
+            Assert.NotNull(logger2);
+            Assert.True(logger2.IsEnabled(LogLevel.Warning), "Warning level should be enabled");
+            Assert.True(logger2.IsEnabled(LogLevel.Error), "Error level should be enabled when Warning is minimum");
+            Assert.False(logger2.IsEnabled(LogLevel.Information), "Information level should not be enabled when Warning is minimum");
         }
         finally
         {
