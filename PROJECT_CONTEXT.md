@@ -62,7 +62,7 @@
 
 ### Key Components
 
-#### 1. MQTTControl.cs
+#### 1. src/InstDotNet/MQTTControl.cs
 - **Purpose**: MQTT client for bidirectional communication
 - **Input**: Receives UWB network JSON from topic `DotnetMQTT/Test/in`
 - **Output**: Publishes updated network with GPS coordinates to topic `DotnetMQTT/Test/out`
@@ -70,7 +70,7 @@
   - Server: `mqtt.dynamicdevices.co.uk:1883`
   - Client ID: `clientId-UwbManager-001`
 
-#### 2. UWBManager.cs
+#### 2. src/InstDotNet/UWBManager.cs
 - **Purpose**: Manages UWB network lifecycle and update pipeline
 - **Responsibilities**:
   - Parse incoming MQTT messages into network structure
@@ -80,7 +80,7 @@
 - **Thread Safety**: Re-entrancy protection via `isUpdating` flag to prevent concurrent updates
 - **Error Handling**: Null checks before processing network data
 
-#### 3. UWB2GPSConverter.cs
+#### 3. src/InstDotNet/UWB2GPSConverter.cs
 - **Purpose**: Core algorithm implementation
 - **Algorithms**:
   - **3D Trilateration**: Calculates positions from 3+ known reference points
@@ -90,7 +90,7 @@
 - **Edge Handling**: `TryGetEndFromEdge` correctly handles both `end0` and `end1` edge endpoints
 - **Requirements**: Minimum 3 beacons with `positionKnown: true` and valid GPS coordinates
 
-#### 4. WGS84Converter.cs
+#### 4. src/InstDotNet/WGS84Converter.cs
 - **Purpose**: Geodetic coordinate transformations
 - **Transformations**:
   - Local 3D coordinates → ECEF (Earth-Centered, Earth-Fixed)
@@ -99,11 +99,11 @@
   - Unity coordinate system conversions
 - **Reference**: Based on WGS84 ellipsoid constants (a=6378.137 km, f=1/298.257223563)
 
-#### 5. VectorExtensions.cs
+#### 5. src/InstDotNet/VectorExtensions.cs
 - **Purpose**: Vector math utilities
 - **Operations**: Normalization, cross product, dot product, distance calculations
 
-#### 6. Logger.cs (AppLogger)
+#### 6. src/InstDotNet/Logger.cs (AppLogger)
 - **Purpose**: Centralized logging infrastructure
 - **Framework**: Microsoft.Extensions.Logging
 - **Features**:
@@ -113,12 +113,12 @@
   - Structured logging with parameters
   - Default log level: Information
 
-#### 7. VersionInfo.cs
+#### 7. src/InstDotNet/VersionInfo.cs
 - **Purpose**: Version information display
 - **Data**: Semantic version, build date, git commit hash
 - **Source**: Assembly metadata injected at build time
 
-#### 8. UwbParser.py
+#### 8. UwbParser.py (root directory)
 - **Purpose**: Preprocessing tool for edge data
 - **Function**: Converts edge list format to network JSON structure
 - **Beacon Configuration**: Hardcoded beacon positions for B5A4, B57A, B98A
@@ -134,7 +134,7 @@ graph TB
         JSON[UWB Network JSON<br/>Relative coordinates + distances]
     end
     
-    subgraph "Application Core"
+    subgraph "Application Core (src/InstDotNet/)"
         Program[Program.cs<br/>Entry Point]
         MQTTCtrl[MQTTControl.cs<br/>MQTT Client]
         UWBManager[UWBManager.cs<br/>Network Manager]
@@ -389,6 +389,7 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - `TestNodes.json`: Sample test data
 - `.github/workflows/ci.yml`: CI/CD pipeline
 - `UwbParser.py`: Data preprocessing tool
+- `src/InstDotNet/`: Main application source code
 - `tests/InstDotNet.Tests/`: Unit test project
 
 ## Notes
