@@ -8,6 +8,16 @@
 **Last Updated**: 2025-11-14  
 **Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`
 
+## Recent Updates (2025-11-14)
+
+### Bug Fixes & Improvements
+- ✅ Fixed `isUpdating` flag bug - re-entrancy guard now works correctly
+- ✅ Fixed `TryGetEndFromEdge` to check both `end0` and `end1` edge endpoints
+- ✅ Fixed typo: `_usernname` → `_username` in MQTTControl.cs
+- ✅ Added comprehensive null checks before processing network data
+- ✅ Optimized neighbor lookups from O(n²) to O(n) using dictionary
+- ✅ Fixed all build warnings (unused variables, async calls)
+
 ## Core Functionality
 
 ### Input
@@ -46,6 +56,8 @@
   - Trigger position calculations
   - Filter nodes with valid positions for output
   - Serialize and publish results
+- **Thread Safety**: Re-entrancy protection via `isUpdating` flag to prevent concurrent updates
+- **Error Handling**: Null checks before processing network data
 
 #### 3. UWB2GPSConverter.cs
 - **Purpose**: Core algorithm implementation
@@ -53,6 +65,8 @@
   - **3D Trilateration**: Calculates positions from 3+ known reference points
   - **Iterative Refinement**: Gradient descent optimization (max 10 iterations, learning rate 0.1)
   - **Error Calculation**: Computes position accuracy based on distance constraint violations
+- **Performance**: Uses `Dictionary<string, UWB>` for O(1) neighbor lookups (optimized from O(n²))
+- **Edge Handling**: `TryGetEndFromEdge` correctly handles both `end0` and `end1` edge endpoints
 - **Requirements**: Minimum 3 beacons with `positionKnown: true` and valid GPS coordinates
 
 #### 4. WGS84Converter.cs
@@ -236,13 +250,10 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - ARM64 native build support
 - CI/CD pipeline (GitHub Actions)
 - Python preprocessing script
-
-### ⚠️ Known Issues
-1. **Bug**: `isUpdating` flag never set to `true` in `UWBManager.cs` (re-entrancy guard ineffective)
-2. **Bug**: `TryGetEndFromEdge` only checks `edge.end1`, missing cases where node is `end0`
-3. **Typo**: `_usernname` should be `_username` in `MQTTControl.cs`
-4. **Missing**: Null checks before processing network data
-5. **Performance**: O(n²) neighbor lookups (should use dictionary)
+- Re-entrancy protection (isUpdating flag)
+- Robust null checking and error handling
+- Optimized O(n) neighbor lookups using dictionary
+- Edge endpoint resolution (handles both end0 and end1)
 
 ### 🔄 Future Improvements
 - Configuration file support (appsettings.json)
@@ -300,8 +311,9 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - **Coordinate System**: Uses Unity-style coordinate system internally (Y-up), converts to ENU (East-North-Up) for GPS
 - **Distance Units**: All distances in meters
 - **Update Frequency**: 10ms update loop (configurable in `Program.cs`)
-- **Error Handling**: Basic error logging to console, continues on failures
-- **Thread Safety**: Limited (volatile flag for trigger, but `isUpdating` not thread-safe)
+- **Error Handling**: Comprehensive null checks and error logging to console, continues on failures
+- **Thread Safety**: Re-entrancy protection via `isUpdating` flag (volatile trigger flag for thread-safe updates)
+- **Performance**: Optimized neighbor lookups using Dictionary<string, UWB> for O(1) access instead of O(n) linear search
 
 ## Contact & Maintenance
 
