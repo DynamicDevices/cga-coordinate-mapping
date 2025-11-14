@@ -417,21 +417,18 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 **The CI is currently working and all tests pass. Any changes to `.github/workflows/ci.yml` risk breaking the build pipeline. Only modify if absolutely necessary and after extensive local testing.**
 
-The CI workflow (`.github/workflows/ci.yml`) has been simplified for maximum reliability. The current working configuration uses:
+The CI workflow (`.github/workflows/ci.yml`) has been simplified to the absolute minimum for maximum reliability. The current working configuration uses:
 
-1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Restores all packages
-2. **Restore main project with runtime** (`dotnet restore src/InstDotNet.csproj -r runtime --force`) - Updates assets for runtime-specific build
-3. **Build main project** (`dotnet build --no-restore -r runtime`) - Builds with runtime identifier
-4. **Build test project** (`dotnet build`) - Builds test project (restores its own packages automatically)
-5. **Run tests** (`dotnet test --no-build`) - Runs tests without rebuilding
+1. **Build main project** (`dotnet build src/InstDotNet.csproj -r runtime`) - Automatically restores and builds with runtime identifier
+2. **Run tests** (`dotnet test tests/InstDotNet.Tests.csproj`) - Automatically restores, builds, and runs tests
 
 **Why this is reliable:**
-- Solution restore gets all packages
-- Main project restore with `--force` ensures runtime-specific assets are updated
-- Test project build without `--no-restore` allows it to restore its own packages (avoids conflicts)
-- `--no-build` flag on test prevents redundant builds
-- Minimal steps reduce chance of race conditions or timing issues
+- `dotnet build` and `dotnet test` automatically handle restore - no manual restore steps needed
+- No `--no-restore` or `--no-build` flags that can cause conflicts
+- Minimal steps - just 2 commands
+- Standard .NET pattern that works consistently
 - All steps in one script block for atomic execution
+- No complex restore/build sequences that can cause race conditions
 
 **Before modifying CI:**
 - Test locally with the exact same commands
