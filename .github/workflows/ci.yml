@@ -38,17 +38,12 @@ jobs:
         
     - name: Build and test
       run: |
-        # Build test project FIRST - this gets xunit into the shared assets file
-        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }}
-        
-        # Build main project - build automatically restores with runtime (may overwrite assets)
+        # Build main project with runtime - this creates runtime-specific binary
         dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
         
-        # Rebuild test project - force restore xunit again after main project may have overwritten assets
-        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --force
-        
-        # Run tests - use --no-build to use pre-built test project
-        dotnet test tests/InstDotNet.Tests.csproj -c Release --no-build --verbosity normal
+        # Build and test in one step - dotnet test will restore and build test project correctly
+        # This avoids the issue where main project restore overwrites shared assets
+        dotnet test tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --verbosity normal
       continue-on-error: false
       
     - name: Publish Release for ${{ matrix.runtime }}
