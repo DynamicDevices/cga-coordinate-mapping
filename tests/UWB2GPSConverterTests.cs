@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Numerics;
-using Xunit;
 
 namespace InstDotNet.Tests;
 

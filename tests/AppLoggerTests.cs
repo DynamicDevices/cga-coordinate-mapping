@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Xunit;
 
 namespace InstDotNet.Tests;
 
