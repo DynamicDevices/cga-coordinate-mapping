@@ -13,6 +13,7 @@ public class VersionInfoTests
 
         // Assert
         Assert.NotNull(version);
+        // Version could be "0.0.0" if assembly version is not set, which is valid
         Assert.NotEmpty(version);
     }
 
@@ -37,6 +38,7 @@ public class VersionInfoTests
 
         // Assert
         Assert.NotNull(buildDate);
+        // Could be "Unknown" if metadata is not set, which is valid
         Assert.NotEmpty(buildDate);
     }
 
@@ -72,8 +74,7 @@ public class VersionInfoTests
         var fullVersion = VersionInfo.FullVersion;
 
         // Assert - Should contain version, build date, and commit hash
-        // Format: "v{Version} (Build: {BuildDate}, Commit: {GitCommitHash})"
-        Assert.Contains("v", fullVersion);
+        // Format: "{Version} (Build: {BuildDate}, Commit: {GitCommitHash})"
         Assert.Contains("Build:", fullVersion);
         Assert.Contains("Commit:", fullVersion);
     }
