@@ -417,20 +417,18 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 **The CI is currently working and all tests pass. Any changes to `.github/workflows/ci.yml` risk breaking the build pipeline. Only modify if absolutely necessary and after extensive local testing.**
 
-The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and tested. The current working configuration uses:
+The CI workflow (`.github/workflows/ci.yml`) has been simplified for maximum reliability. The current working configuration uses:
 
-1. **Restore solution file** (`dotnet restore InstDotNet.sln`) - Gets all packages including test packages
-2. **Restore main project with runtime** (`dotnet restore src/InstDotNet.csproj -r runtime --force`) - Updates assets for runtime-specific build
-3. **Build main project** with `--no-restore` flag
-4. **Build test project** WITHOUT `--no-restore` flag (needs to resolve main project reference)
-5. **Run Tests** with `--no-build` flag
+1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Restores all packages for all projects in one step
+2. **Build main project** (`dotnet build src/InstDotNet.csproj -r runtime`) - Builds with runtime identifier
+3. **Build test project** (`dotnet build tests/InstDotNet.Tests.csproj`) - Builds test project
+4. **Run tests** (`dotnet test --no-build`) - Runs tests without rebuilding
 
-**Why this order matters:**
-- Solution restore gets all packages (main project + test packages like xunit)
-- Main project restore with runtime and `--force` updates assets file for runtime-specific packages
-- Test project build without `--no-restore` allows it to properly resolve the main project reference (which was built with a runtime)
-- Using `--no-restore` on main build and `--no-build` on test run ensures efficiency
-- Changing this order or removing flags has caused repeated CI failures
+**Why this is reliable:**
+- Single restore step ensures all packages are available before any build
+- No complex restore/build sequences that can cause race conditions
+- Standard .NET pattern that works consistently across environments
+- All steps in one script block for atomic execution
 
 **Before modifying CI:**
 - Test locally with the exact same commands
