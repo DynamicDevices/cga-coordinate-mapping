@@ -42,7 +42,16 @@ public static class AppLogger
         {
             throw new InvalidOperationException("Logger factory is null after initialization");
         }
-        return _loggerFactory.CreateLogger(categoryName);
+        try
+        {
+            return _loggerFactory.CreateLogger(categoryName);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Logger was disposed (e.g., during tests), reinitialize
+            Initialize();
+            return _loggerFactory!.CreateLogger(categoryName);
+        }
     }
 
     /// <summary>
@@ -54,7 +63,16 @@ public static class AppLogger
         {
             Initialize();
         }
-        return _loggerFactory!.CreateLogger<T>();
+        try
+        {
+            return _loggerFactory!.CreateLogger<T>();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Logger was disposed (e.g., during tests), reinitialize
+            Initialize();
+            return _loggerFactory!.CreateLogger<T>();
+        }
     }
 
     /// <summary>
