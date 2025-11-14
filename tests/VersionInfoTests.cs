@@ -1,5 +1,7 @@
 using System.Reflection;
 
+using Xunit;
+
 namespace InstDotNet.Tests;
 
 public class VersionInfoTests

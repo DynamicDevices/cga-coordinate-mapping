@@ -1,5 +1,7 @@
 using System.Numerics;
 
+using Xunit;
+
 namespace InstDotNet.Tests;
 
 public class WGS84ConverterTests
