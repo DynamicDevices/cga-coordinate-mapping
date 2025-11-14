@@ -522,7 +522,7 @@ The CI workflow (`.github/workflows/ci.yml`) has been carefully configured and t
 - **Performance**: Optimized neighbor lookups using Dictionary<string, UWB> for O(1) access instead of O(n) linear search
 - **Versioning**: Semantic versioning (MAJOR.MINOR.PATCH) with build metadata (date, git commit hash)
 - **License**: GPLv3 - See LICENSE file for full terms
-- **CI Stability**: The CI workflow configuration is critical - see "CI Configuration Stability" section above before making changes
+- **CI Stability**: ⚠️ **CRITICAL** - The CI workflow is working correctly. DO NOT modify `.github/workflows/ci.yml` unless absolutely necessary. See "CI Configuration Stability" section above for details. The CI has been broken multiple times by unnecessary changes - please respect this warning.
 
 ## Contact & Maintenance
 
