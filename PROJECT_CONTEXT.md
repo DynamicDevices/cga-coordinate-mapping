@@ -419,16 +419,17 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 The CI workflow (`.github/workflows/ci.yml`) has been simplified for maximum reliability. The current working configuration uses:
 
-1. **Build main project** (`dotnet build src/InstDotNet.csproj -r runtime`) - Automatically restores and builds with runtime identifier
-2. **Build test project** (`dotnet build tests/InstDotNet.Tests.csproj`) - Automatically restores and builds test project
-3. **Run tests** (`dotnet test --no-build`) - Runs tests without rebuilding
+1. **Restore solution** (`dotnet restore InstDotNet.sln`) - Restores all packages once
+2. **Build main project** (`dotnet build --no-restore -r runtime`) - Builds with runtime identifier
+3. **Build test project** (`dotnet build --no-restore`) - Builds test project
+4. **Run tests** (`dotnet test --no-build`) - Runs tests without rebuilding
 
 **Why this is reliable:**
-- `dotnet build` automatically restores packages - no separate restore step needed
+- Single restore step ensures all packages are available
+- `--no-restore` flags prevent redundant restore operations
+- `--no-build` flag on test prevents redundant builds
 - Minimal steps reduce chance of race conditions or timing issues
-- Standard .NET pattern that works consistently across environments
 - All steps in one script block for atomic execution
-- No complex restore/build sequences
 
 **Before modifying CI:**
 - Test locally with the exact same commands

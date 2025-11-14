@@ -33,8 +33,8 @@ jobs:
     - name: Restore, build, and test
       run: |
         dotnet restore InstDotNet.sln
-        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
-        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }}
+        dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
+        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         dotnet test tests/InstDotNet.Tests.csproj --no-build -c Release --verbosity normal
       continue-on-error: false
       
