@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 
 public class UWBManager
@@ -90,7 +91,7 @@ public class UWBManager
     {
         Console.WriteLine($"Sending network with {sendNetwork.uwbs.Length} uwbs.");
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
-        MQTTControl.Publish(data);
+        _ = Task.Run(async () => await MQTTControl.Publish(data));
     }
 }
 
