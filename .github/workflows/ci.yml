@@ -47,7 +47,7 @@ jobs:
       continue-on-error: false
       
     - name: Publish Release for ${{ matrix.runtime }}
-      run: dotnet publish src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} --self-contained false -o ./publish/${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
+      run: dotnet publish src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} --self-contained false -o ./publish/${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
       
     - name: Create archive for ${{ matrix.runtime }}
       run: |
