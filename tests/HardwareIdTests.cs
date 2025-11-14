@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace InstDotNet.Tests;
 
 public class HardwareIdTests
