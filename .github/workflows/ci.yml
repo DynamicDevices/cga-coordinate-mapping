@@ -9,8 +9,11 @@ on:
 
 jobs:
   build:
-    name: Build ARM64 Native Binary
+    name: Build Native Binaries
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [linux-arm64, linux-x64]
     
     steps:
     - name: Checkout code
@@ -30,21 +33,21 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
-    - name: Publish Release for Linux ARM64
-      run: dotnet publish -c Release -r linux-arm64 --self-contained false -o ./publish/linux-arm64 -p:GitCommitHash=${{ steps.git.outputs.hash }}
+    - name: Publish Release for ${{ matrix.runtime }}
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained false -o ./publish/${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
       
-    - name: Create archive
+    - name: Create archive for ${{ matrix.runtime }}
       run: |
-        cd publish/linux-arm64
-        tar -czf ../../InstDotNet-linux-arm64.tar.gz .
+        cd publish/${{ matrix.runtime }}
+        tar -czf ../../InstDotNet-${{ matrix.runtime }}.tar.gz .
         cd ../..
         
-    - name: Upload artifact
+    - name: Upload artifact for ${{ matrix.runtime }}
       uses: actions/upload-artifact@v4
       with:
-        name: InstDotNet-linux-arm64
+        name: InstDotNet-${{ matrix.runtime }}
         path: |
-          publish/linux-arm64/
-          InstDotNet-linux-arm64.tar.gz
+          publish/${{ matrix.runtime }}/
+          InstDotNet-${{ matrix.runtime }}.tar.gz
         retention-days: 30
 
