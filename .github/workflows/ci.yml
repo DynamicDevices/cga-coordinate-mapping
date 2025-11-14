@@ -49,8 +49,9 @@ jobs:
         # Build main project - use --no-restore since we already restored
         dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
         
-        # Build test project - use --no-restore since we already restored
-        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
+        # Build test project - DON'T use --no-restore, let it restore if needed
+        # This ensures xunit is available even if main project restore overwrote assets
+        dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }}
         
         # Run tests - use --no-build to use pre-built test project
         dotnet test tests/InstDotNet.Tests.csproj -c Release --no-build --verbosity normal
