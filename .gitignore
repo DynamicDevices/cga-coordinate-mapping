@@ -2,6 +2,7 @@
 bin/
 obj/
 publish/
+TestResults/
 
 # Build results
 [Dd]ebug/
