@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 
 namespace InstDotNet.Tests;
 
+[Collection("LoggerTests")] // Run tests in this class sequentially to avoid logger disposal conflicts
 public class AppLoggerTests
 {
     [Fact]
