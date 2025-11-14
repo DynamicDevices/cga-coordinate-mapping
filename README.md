@@ -261,6 +261,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ## Authors
 
 - CGA (Initial development)
+- Alex J Lennon (AI Wrangling)
 
 ## Acknowledgments
 
