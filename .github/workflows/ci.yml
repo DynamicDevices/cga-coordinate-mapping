@@ -1,0 +1,44 @@
+name: CI Build and Publish
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ARM64 Native Binary
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Publish Release for Linux ARM64
+      run: dotnet publish -c Release -r linux-arm64 --self-contained false -o ./publish/linux-arm64
+      
+    - name: Create archive
+      run: |
+        cd publish/linux-arm64
+        tar -czf ../../InstDotNet-linux-arm64.tar.gz .
+        cd ../..
+        
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: InstDotNet-linux-arm64
+        path: |
+          publish/linux-arm64/
+          InstDotNet-linux-arm64.tar.gz
+        retention-days: 30
+
