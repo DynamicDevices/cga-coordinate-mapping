@@ -60,8 +60,12 @@ public class MQTTControl
                 if (string.IsNullOrWhiteSpace(config.MQTT.ClientId) || 
                     config.MQTT.ClientId == DEFAULT_CLIENT_ID)
                 {
-                    _clientId = HardwareId.GetMqttClientId("UwbManager");
-                    _logger?.LogInformation("Using hardware-based MQTT client ID: {ClientId}", _clientId);
+                    // Add process ID to make client ID unique per instance
+                    // This prevents conflicts when multiple instances run on the same hardware
+                    var baseClientId = HardwareId.GetMqttClientId("UwbManager");
+                    var processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+                    _clientId = $"{baseClientId}-pid{processId}";
+                    _logger?.LogInformation("Using hardware-based MQTT client ID: {ClientId} (PID: {ProcessId})", _clientId, processId);
                 }
                 else
                 {

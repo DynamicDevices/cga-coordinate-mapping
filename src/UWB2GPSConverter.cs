@@ -359,6 +359,10 @@ public class UWB2GPSConverter
         int totalEdges = 0;
         float maxError = 0;
         float minError = float.MaxValue;
+        string? maxErrorEdge = null;
+        string? minErrorEdge = null;
+        float maxMeasuredDist = 0;
+        float maxCalculatedDist = 0;
         
         foreach (UWB node in network.uwbs)
         {
@@ -370,8 +374,19 @@ public class UWB2GPSConverter
                     float error = Math.Abs(currentDist - edge.distance);
                     totalError += error;
                     totalEdges++;
-                    if (error > maxError) maxError = error;
-                    if (error < minError) minError = error;
+                    
+                    if (error > maxError)
+                    {
+                        maxError = error;
+                        maxErrorEdge = $"{node.id}->{end.id}";
+                        maxMeasuredDist = edge.distance;
+                        maxCalculatedDist = currentDist;
+                    }
+                    if (error < minError)
+                    {
+                        minError = error;
+                        minErrorEdge = $"{node.id}->{end.id}";
+                    }
                 }
             }
         }
@@ -380,6 +395,24 @@ public class UWB2GPSConverter
 
         _logger?.LogInformation("UWB to GPS conversion completed. Updated {Updated}/{Total} positions. Average error: {Error:F2}m (min: {Min:F2}m, max: {Max:F2}m, edges: {Edges}).", 
             totalNodesUpdated, totalNodes, averageError, minError == float.MaxValue ? 0 : minError, maxError, totalEdges);
+        
+        // Log details about the worst edge for debugging
+        if (maxErrorEdge != null && maxError > 10.0f)
+        {
+            // Find the actual nodes for the worst edge to log their positions
+            string[] edgeParts = maxErrorEdge.Split("->");
+            if (edgeParts.Length == 2 && nodeMap.TryGetValue(edgeParts[0], out UWB? node1) && nodeMap.TryGetValue(edgeParts[1], out UWB? node2))
+            {
+                _logger?.LogWarning("Worst edge error: {Edge} - Measured: {Measured:F2}m, Calculated: {Calculated:F2}m, Error: {Error:F2}m", 
+                    maxErrorEdge, maxMeasuredDist, maxCalculatedDist, maxError);
+                _logger?.LogWarning("  Node1 ({Id}) position: ({X:F2}, {Y:F2}, {Z:F2}), known: {Known}, latLonAlt: {LatLonAlt}", 
+                    node1.id, node1.position.X, node1.position.Y, node1.position.Z, node1.positionKnown,
+                    node1.latLonAlt != null && node1.latLonAlt.Length >= 3 ? $"{node1.latLonAlt[0]:F6}, {node1.latLonAlt[1]:F6}, {node1.latLonAlt[2]:F2}" : "null");
+                _logger?.LogWarning("  Node2 ({Id}) position: ({X:F2}, {Y:F2}, {Z:F2}), known: {Known}, latLonAlt: {LatLonAlt}", 
+                    node2.id, node2.position.X, node2.position.Y, node2.position.Z, node2.positionKnown,
+                    node2.latLonAlt != null && node2.latLonAlt.Length >= 3 ? $"{node2.latLonAlt[0]:F6}, {node2.latLonAlt[1]:F6}, {node2.latLonAlt[2]:F2}" : "null");
+            }
+        }
         if (totalNodesUpdated + 3 < totalNodes)
         {
             var untriangulatedNodes = new List<string>();

@@ -66,6 +66,28 @@ public class UWBManager
             if (network != null && network.uwbs != null)
             {
                 _logger?.LogInformation("Successfully parsed MQTT message into UWB network. Found {Count} UWBs.", network.uwbs.Length);
+                
+                // Log detailed node information at DEBUG level
+                foreach (var node in network.uwbs)
+                {
+                    if (node != null)
+                    {
+                        string latLonAltStr = node.latLonAlt != null && node.latLonAlt.Length >= 3
+                            ? $"{node.latLonAlt[0]:F6}, {node.latLonAlt[1]:F6}, {node.latLonAlt[2]:F2}"
+                            : "null";
+                        
+                        string edgeInfo = node.edges != null && node.edges.Count > 0
+                            ? string.Join(", ", node.edges.Select(e => {
+                                // Determine which end is the other node (not the current node)
+                                string otherEnd = (e.end0 == node.id) ? e.end1 : e.end0;
+                                return $"{otherEnd}:{e.distance:F2}m";
+                            }))
+                            : "no edges";
+                        
+                        _logger?.LogDebug("  Node {Id}: positionKnown={Known}, latLonAlt=[{LatLonAlt}], edges=[{Edges}]",
+                            node.id, node.positionKnown, latLonAltStr, edgeInfo);
+                    }
+                }
             }
             updateNetworkTrigger = true;
         }
@@ -145,6 +167,10 @@ public class UWBManager
             return;
         }
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
+        
+        // Log the JSON payload at DEBUG level
+        _logger?.LogDebug("Publishing JSON payload to MQTT: {JsonPayload}", data);
+        
         _ = Task.Run(async () => await MQTTControl.Publish(data));
     }
 }

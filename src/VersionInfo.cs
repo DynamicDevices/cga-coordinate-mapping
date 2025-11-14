@@ -54,12 +54,12 @@ public static class VersionInfo
                     if (!string.IsNullOrEmpty(location))
                     {
                         var fileInfo = new FileInfo(location);
-                        return fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss UTC");
+            return fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss UTC");
                     }
                 }
-            }
-            catch
-            {
+        }
+        catch
+        {
                 // Ignore - single-file app or other error
             }
         }

@@ -32,7 +32,7 @@ class Program
 
         // Display version information
         logger.LogInformation("CGA Coordinate Mapping - {Version}", VersionInfo.FullVersion);
-        logger.LogInformation("Log level: {LogLevel}", logLevel);
+        logger.LogInformation("Log level: {LogLevel} (from config: '{ConfigValue}')", logLevel, logLevelString ?? "null");
         logger.LogInformation("Configuration loaded: {BeaconCount} beacons configured", _config.Beacons.Count);
         logger.LogInformation("");
 

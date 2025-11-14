@@ -6,12 +6,20 @@
 
 **Status**: Active Development  
 **Last Updated**: 2025-11-14  
-**Version**: 1.3.0  
-**Latest Release**: [v1.3.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.3.0) (2025-11-14)  
+**Version**: 1.4.0  
+**Latest Release**: [v1.4.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.4.0) (2025-11-14)  
 **Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`  
 **License**: GPLv3 (see LICENSE file)
 
 ## Recent Updates (2025-11-14)
+
+### Debug Logging Default & MQTT Improvements (2025-11-14 - v1.4.0)
+- ✅ **Default DEBUG Logging**: Changed default `LogLevel` in `appsettings.json` from "Information" to "Debug" for testing
+- ✅ **MQTT Client ID Uniqueness**: Added process ID to MQTT client ID to prevent conflicts when multiple instances run on same hardware
+- ✅ **DEBUG JSON Payload Logging**: Added DEBUG-level logging for full JSON payloads being published to MQTT
+- ✅ **DEBUG Node Data Logging**: Added DEBUG-level logging for detailed node information (positionKnown, latLonAlt, edges) when receiving MQTT messages
+- ✅ **MQTT KeepAlive**: Configured MQTT KeepAlive period (60s default) to prevent broker from disconnecting idle clients
+- ✅ **Health Check Integration**: Integrated health check metrics (last process time, beacon count, nodes processed, MQTT connection status)
 
 ### Critical CI Fix (2025-11-14 - v1.3.0)
 - ✅ **FIXED CI**: Removed `Directory.Build.props` that was causing shared obj directory conflicts
