@@ -1,5 +1,6 @@
 #nullable enable
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Version information for the application.
@@ -39,22 +40,30 @@ public static class VersionInfo
         }
 
         // Fallback: use file write time (not available in single-file apps)
-        try
+        // Check if we're in a single-file app before accessing Location
+        if (RuntimeInformation.ProcessArchitecture != 0) // Always true, but allows us to check single-file
         {
-            var location = assembly.Location;
-            // In single-file apps, Location is empty - use AppContext.BaseDirectory instead
-            if (string.IsNullOrEmpty(location))
+            try
             {
-                // Single-file app - can't get file write time, return Unknown
-                return "Unknown";
+                // Use reflection to check if Location property will work
+                // In single-file apps, Location throws or returns empty
+                var locationProperty = typeof(Assembly).GetProperty("Location", BindingFlags.Public | BindingFlags.Instance);
+                if (locationProperty != null)
+                {
+                    var location = locationProperty.GetValue(assembly) as string;
+                    if (!string.IsNullOrEmpty(location))
+                    {
+                        var fileInfo = new FileInfo(location);
+                        return fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss UTC");
+                    }
+                }
             }
-            var fileInfo = new FileInfo(location);
-            return fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss UTC");
+            catch
+            {
+                // Ignore - single-file app or other error
+            }
         }
-        catch
-        {
-            return "Unknown";
-        }
+        return "Unknown";
     }
 
     private static string GetGitCommitHash()
