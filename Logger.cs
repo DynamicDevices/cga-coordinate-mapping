@@ -38,6 +38,10 @@ public static class AppLogger
         {
             Initialize();
         }
+        if (_loggerFactory == null)
+        {
+            throw new InvalidOperationException("Logger factory is null after initialization");
+        }
         return _loggerFactory.CreateLogger(categoryName);
     }
 

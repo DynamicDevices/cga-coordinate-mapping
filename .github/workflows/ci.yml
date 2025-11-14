@@ -33,6 +33,19 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
+    - name: Build and Check Warnings
+      run: |
+        echo "Building project and checking for warnings..."
+        BUILD_OUTPUT=$(dotnet build InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore 2>&1)
+        echo "$BUILD_OUTPUT"
+        WARNINGS=$(echo "$BUILD_OUTPUT" | grep -i "warning CS" | wc -l)
+        if [ "$WARNINGS" -gt 0 ]; then
+          echo "::error::Build has $WARNINGS warning(s). Please fix all warnings."
+          echo "$BUILD_OUTPUT" | grep -i "warning CS" || true
+          exit 1
+        fi
+        echo "✓ No warnings found"
+      
     - name: Run Tests
       run: dotnet test --no-build || dotnet test
       

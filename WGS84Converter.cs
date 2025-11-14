@@ -20,8 +20,8 @@ public class WGS84Converter
     //Set this to whatever your north is in terms of (x, z) as a unit vector. eg (1, 0) is +x = north 
     //N.b. +y assumed to be altitude vector (ie perpendicular to and away from the Earth) 
     private static Vector2 unitVectorNorth = new Vector2(0, -1);
-    private static float[,] rotAdjMatrix_ACW; //rotates a vector from if n = +x to wherever north is
-    private static float[,] rotAdjMatrix_CW; //rotates a vector from wherever north is to if north was +x
+    private static float[,]? rotAdjMatrix_ACW; //rotates a vector from if n = +x to wherever north is
+    private static float[,]? rotAdjMatrix_CW; //rotates a vector from wherever north is to if north was +x
 
     private static double EARTH_A;
     private static double EARTH_B;
@@ -555,6 +555,10 @@ public class WGS84Converter
         {
             SetAdjMatrix();
         }
+        if (rotAdjMatrix_ACW == null)
+        {
+            throw new InvalidOperationException("rotAdjMatrix_ACW is null after SetAdjMatrix");
+        }
         double[] standardUnity = new double[3] { enuVector[1], enuVector[2], -enuVector[0] };
         double[] adjForNorthUnity = new double[3] { rotAdjMatrix_ACW[0, 0] * standardUnity[0] + rotAdjMatrix_ACW[0, 1] * standardUnity[2], standardUnity[1], rotAdjMatrix_ACW[1, 0] * standardUnity[0] + rotAdjMatrix_ACW[1, 1] * standardUnity[2] };
 
@@ -566,6 +570,10 @@ public class WGS84Converter
         {
             SetAdjMatrix();
         }
+        if (rotAdjMatrix_ACW == null)
+        {
+            throw new InvalidOperationException("rotAdjMatrix_ACW is null after SetAdjMatrix");
+        }
         Vector3 standardUnity = new Vector3(enuVector[1], enuVector[2], -enuVector[0]);
         Vector3 adjForNorthUnity = new Vector3(rotAdjMatrix_ACW[0, 0] * standardUnity[0] + rotAdjMatrix_ACW[0, 1] * standardUnity[2], standardUnity[1], rotAdjMatrix_ACW[1, 0] * standardUnity[0] + rotAdjMatrix_ACW[1, 1] * standardUnity[2]);
 
@@ -573,9 +581,13 @@ public class WGS84Converter
     }
     private static double[] Unity2ENU(double[] unityVector)
     {
-        if (rotAdjMatrix_ACW == null)
+        if (rotAdjMatrix_CW == null)
         {
             SetAdjMatrix();
+        }
+        if (rotAdjMatrix_CW == null)
+        {
+            throw new InvalidOperationException("rotAdjMatrix_CW is null after SetAdjMatrix");
         }
         double[] standardUnity = new double[3] { rotAdjMatrix_CW[0, 0] * unityVector[0] + rotAdjMatrix_CW[0, 1] * unityVector[2], unityVector[1], rotAdjMatrix_CW[1, 0] * unityVector[0] + rotAdjMatrix_CW[1, 1] * unityVector[2] };
         double[] enu = new double[3] { -standardUnity[2], standardUnity[0], standardUnity[1] };
@@ -584,9 +596,13 @@ public class WGS84Converter
     }
     private static Vector3 Unity2ENU(Vector3 unityVector)
     {
-        if (rotAdjMatrix_ACW == null)
+        if (rotAdjMatrix_CW == null)
         {
             SetAdjMatrix();
+        }
+        if (rotAdjMatrix_CW == null)
+        {
+            throw new InvalidOperationException("rotAdjMatrix_CW is null after SetAdjMatrix");
         }
         Vector3 standardUnity = new Vector3 ( rotAdjMatrix_CW[0, 0] * unityVector[0] + rotAdjMatrix_CW[0, 1] * unityVector[2], unityVector[1], rotAdjMatrix_CW[1, 0] * unityVector[0] + rotAdjMatrix_CW[1, 1] * unityVector[2] );
         Vector3 enu = new Vector3 ( -standardUnity[2], standardUnity[0], standardUnity[1] );

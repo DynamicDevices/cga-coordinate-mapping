@@ -54,7 +54,7 @@ public class UWB2GPSConverter
     public class Network
 #nullable enable
     {
-        public UWB[] uwbs;
+        public UWB[] uwbs = Array.Empty<UWB>();
         public Network() { }
         public Network(UWB[] uwbs) => this.uwbs = uwbs;
     }
@@ -125,7 +125,7 @@ public class UWB2GPSConverter
                 int index = 0;
                 foreach (Edge edge in node.edges)
                 {
-                    if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB end))
+                    if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB? end) && end != null)
                     {
                         if (end.positionKnown || end.lastPositionUpdateTime == timeNow)
                         {
@@ -210,10 +210,10 @@ public class UWB2GPSConverter
                     // Calculate gradient based on distance constraints
                     foreach (Edge edge in node.edges)
                     {
-                        if (!TryGetEndFromEdge(edge, node.id, nodeMap, out UWB neighbour))
+                        if (!TryGetEndFromEdge(edge, node.id, nodeMap, out UWB? neighbour) || neighbour == null)
                             continue;
 
-                        if (neighbour == null || !neighbour.lastPositionUpdateTime.Equals(timeNow)) continue;
+                        if (!neighbour.lastPositionUpdateTime.Equals(timeNow)) continue;
 
                         float currentDist = Vector3.Distance(node.position, neighbour.position);
                         float error = currentDist - edge.distance;
@@ -280,7 +280,7 @@ public class UWB2GPSConverter
         float totalError = 0;
         foreach (Edge edge in node.edges)
         {
-            if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB end))
+            if (TryGetEndFromEdge(edge, node.id, nodeMap, out UWB? end) && end != null)
             {
                 totalError += EdgeErrorSquared(node, end, edge.distance);
             }
@@ -303,7 +303,7 @@ public class UWB2GPSConverter
         if (edge == null || string.IsNullOrEmpty(currentNodeId) || nodeMap == null) return false;
 
         // Find the OTHER end of the edge (not the current node)
-        string otherEndId = null;
+        string? otherEndId = null;
         if (edge.end0 == currentNodeId)
         {
             otherEndId = edge.end1;

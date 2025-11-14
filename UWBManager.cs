@@ -8,12 +8,12 @@ using Microsoft.Extensions.Logging;
 
 public class UWBManager
 {
-    private static UWB2GPSConverter.Network network;
-    private static UWB2GPSConverter.Network sendNetwork;
-    private static List<UWB2GPSConverter.UWB> sendUwbsList;
+    private static UWB2GPSConverter.Network? network;
+    private static UWB2GPSConverter.Network? sendNetwork;
+    private static List<UWB2GPSConverter.UWB>? sendUwbsList;
     private static volatile bool updateNetworkTrigger = false;
     private static bool isUpdating = false;
-    private static JsonSerializerOptions jsonOptions;
+    private static JsonSerializerOptions? jsonOptions;
     private static ILogger? _logger;
 
     public static void Initialise()
@@ -29,15 +29,23 @@ public class UWBManager
         };
         MQTTControl.OnMessageReceived -= UpdateUwbsFromMessage;
         MQTTControl.OnMessageReceived += UpdateUwbsFromMessage;
-        network = null!; // Will be set when message received
+        // network will be set when message received
     }
 
     public static void UpdateUwbsFromMessage(string message)
     {
         try
         {
+            if (jsonOptions == null)
+            {
+                _logger?.LogError("jsonOptions is null, cannot deserialize message");
+                return;
+            }
             network = JsonSerializer.Deserialize<UWB2GPSConverter.Network>(message, jsonOptions);
-            _logger?.LogInformation("Successfully parsed MQTT message into UWB network. Found {Count} UWBs.", network.uwbs.Length);
+            if (network != null && network.uwbs != null)
+            {
+                _logger?.LogInformation("Successfully parsed MQTT message into UWB network. Found {Count} UWBs.", network.uwbs.Length);
+            }
             updateNetworkTrigger = true;
         }
         catch (System.Exception e)
@@ -103,6 +111,11 @@ public class UWBManager
     private static void SendNetwork(UWB2GPSConverter.Network sendNetwork)
     {
         _logger?.LogInformation("Sending network with {Count} UWBs.", sendNetwork.uwbs.Length);
+        if (jsonOptions == null)
+        {
+            _logger?.LogError("jsonOptions is null, cannot serialize network");
+            return;
+        }
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
         _ = Task.Run(async () => await MQTTControl.Publish(data));
     }

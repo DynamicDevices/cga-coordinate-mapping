@@ -20,20 +20,20 @@ public class MQTTControl
     public const string DEFAULT_RECEIVE_MESSAGE_TOPIC = "DotnetMQTT/Test/in";
     public const string DEFAULT_SEND_MESSAGE_TOPIC = "DotnetMQTT/Test/out";
     public const int DEFAULT_TIMEOUT_IN_SECONDS = 10; //not currently being used - need to for safety?
-    private static string _clientId;
-    private static string _serverAddress;
-    private static string _username;
-    private static string _password;
+    private static string _clientId = string.Empty;
+    private static string _serverAddress = string.Empty;
+    private static string _username = string.Empty;
+    private static string _password = string.Empty;
     private static int _port;
-    private static string _receiveMessageTopic;
-    private static string _sendMessageTopic;
+    private static string _receiveMessageTopic = string.Empty;
+    private static string _sendMessageTopic = string.Empty;
     private static int _timeoutInSeconds;
 
 
-    public static System.Action<string> OnMessageReceived;
+    public static System.Action<string>? OnMessageReceived;
 
-    private static IMqttClient client;
-    private static CancellationTokenSource _cts;
+    private static IMqttClient? client;
+    private static CancellationTokenSource? _cts;
 
     // Return Task so callers can await completion and observe exceptions
     public static async Task Initialise(CancellationTokenSource cts,
@@ -172,6 +172,11 @@ public class MQTTControl
 
         try
         {
+            if (client == null || _cts == null)
+            {
+                _logger?.LogWarning("MQTT: Cannot publish - client or cancellation token is null");
+                return;
+            }
             await client.PublishAsync(messageOut, _cts.Token).ConfigureAwait(false);
             _logger?.LogDebug("MQTT: Published to {Topic}", _sendMessageTopic);
         }
