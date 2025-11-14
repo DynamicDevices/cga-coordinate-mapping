@@ -46,6 +46,7 @@ public class MqttConfig
     public double RetryBackoffMultiplier { get; set; } = 2.0;
     public bool AutoReconnect { get; set; } = true;
     public int ReconnectDelaySeconds { get; set; } = 5;
+    public int KeepAlivePeriodSeconds { get; set; } = 60;
     public bool UseTls { get; set; } = false;
     public bool AllowUntrustedCertificates { get; set; } = false;
     public string? CertificatePath { get; set; }

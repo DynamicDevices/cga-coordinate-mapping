@@ -142,11 +142,16 @@ public class MQTTControl
             return Task.CompletedTask;
         };
 
+        // Get keepalive period from config (default: 60 seconds)
+        // KeepAlive prevents broker from disconnecting idle clients
+        int keepAlivePeriod = _config?.MQTT.KeepAlivePeriodSeconds ?? 60;
+        
         var builder = new MqttClientOptionsBuilder()
             .WithClientId(_clientId)
             .WithTcpServer(_serverAddress, _port)
             .WithCleanSession()
-            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds));
+            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds))
+            .WithKeepAlivePeriod(TimeSpan.FromSeconds(keepAlivePeriod));
 
         // Add TLS/SSL if configured
         if (_config?.MQTT.UseTls == true)
@@ -351,11 +356,15 @@ public class MQTTControl
             return;
         }
 
+        // Get keepalive period from config (default: 60 seconds)
+        int keepAlivePeriod = _config?.MQTT.KeepAlivePeriodSeconds ?? 60;
+        
         var builder = new MqttClientOptionsBuilder()
             .WithClientId(_clientId)
             .WithTcpServer(_serverAddress, _port)
             .WithCleanSession()
-            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds));
+            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds))
+            .WithKeepAlivePeriod(TimeSpan.FromSeconds(keepAlivePeriod));
 
         // Add TLS/SSL if configured (same as initial connection)
         if (_config?.MQTT.UseTls == true)
