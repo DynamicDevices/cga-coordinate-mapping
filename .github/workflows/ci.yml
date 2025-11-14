@@ -33,6 +33,9 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
+    - name: Run Tests
+      run: dotnet test --no-build || dotnet test
+      
     - name: Publish Release for ${{ matrix.runtime }}
       run: dotnet publish -c Release -r ${{ matrix.runtime }} --self-contained false -o ./publish/${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }}
       
