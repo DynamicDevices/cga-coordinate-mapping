@@ -1,6 +1,6 @@
 # Code Coverage Improvement Plan
 
-**Current Status**: 26.1% line coverage, 7.1% branch coverage (302/1157 lines, 33/465 branches)
+**Current Status**: 53.1% line coverage, 40.6% branch coverage (615/1157 lines, 189/465 branches) ✅ **IMPROVED from 26.1%/7.1%**
 
 ## Coverage Analysis
 
@@ -9,15 +9,17 @@
 - **UWB2GPSConverter** (8 tests) - Edge handling and error calculations
 - **WGS84Converter** (6 tests) - Basic coordinate conversions
 
-### ❌ Major Gaps (0% Coverage)
+### ✅ Improved Coverage (Previously 0%)
+1. **HardwareId.cs** - ✅ Now tested (14 tests) - Hardware ID generation, MQTT client ID sanitization
+2. **MQTTControl.cs** - ✅ Now tested (11 tests) - Message handling, event subscription, constants
+3. **UWBManager.cs** - ✅ Now tested (10 tests) - Initialization, message parsing, update logic
+
+### ❌ Remaining Gaps (Low Coverage)
 1. **Program.cs** - Main entry point, configuration loading, application lifecycle
-2. **MQTTControl.cs** - MQTT connection, retry logic, reconnection, publishing
-3. **UWBManager.cs** - Network management, message parsing, update loop
-4. **AppConfig.cs** - Configuration loading and binding
-5. **Logger.cs** - Logging framework initialization
-6. **VersionInfo.cs** - Version information display
-7. **UWB2GPSConverter** - Main conversion algorithm, trilateration, refinement
-8. **WGS84Converter** - Many internal geodetic conversion methods
+2. **AppConfig.cs** - Configuration loading and binding (partial coverage)
+3. **VersionInfo.cs** - Version information display (partial coverage)
+4. **UWB2GPSConverter** - Main conversion algorithm, trilateration, refinement (partial coverage)
+5. **WGS84Converter** - Many internal geodetic conversion methods (partial coverage)
 
 ---
 
