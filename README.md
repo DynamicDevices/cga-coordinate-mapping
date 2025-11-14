@@ -81,17 +81,33 @@ dotnet publish -c Release -r osx-arm64
 
 ## Configuration
 
+### Configuration Files
+
+The application uses `appsettings.json` for configuration. A development override file `appsettings.Development.json` is also supported.
+
+**Location**: `src/appsettings.json`
+
+**Configuration Sections**:
+- **MQTT**: Server address, port, topics, credentials, retry settings, auto-reconnect
+- **Application**: Update interval, log level
+- **Algorithm**: Max iterations, learning rate, refinement enabled/disabled
+- **Beacons**: Dynamic beacon GPS coordinates (replaces hardcoded values)
+
+**Environment Variables**: All settings can be overridden via environment variables (e.g., `MQTT__ServerAddress`, `Application__LogLevel`).
+
 ### MQTT Settings
 
-Default MQTT configuration (can be modified in `MQTTControl.cs`):
+Default MQTT configuration (from `appsettings.json`):
 
 - **Server**: `mqtt.dynamicdevices.co.uk`
 - **Port**: `1883`
 - **Receive Topic**: `DotnetMQTT/Test/in`
 - **Send Topic**: `DotnetMQTT/Test/out`
 - **Client ID**: `clientId-UwbManager-001`
+- **Retry Attempts**: 5 (with exponential backoff)
+- **Auto Reconnect**: Enabled
 
-To customize, modify the constants in `MQTTControl.cs` or pass parameters to `MQTTControl.Initialise()`.
+To customize, edit `appsettings.json` or set environment variables.
 
 ### UWB Network Format
 
@@ -227,10 +243,25 @@ After initial trilateration, the system applies gradient descent optimization:
 
 ### Testing
 
-Currently, testing is done manually with `TestNodes.json`. Future improvements should include:
-- Unit tests for trilateration algorithms
+**Unit Tests**: Comprehensive test suite with **57 tests** (all passing ✅)
+- Vector math operations (11 tests)
+- Trilateration algorithms (13 tests)
+- Coordinate conversions (6 tests)
+- Configuration loading (6 tests)
+- Logging framework (7 tests)
+- Version information (6 tests)
+- Edge handling and error calculations (8 tests)
+
+**CI Integration**: All tests run automatically in GitHub Actions for both linux-arm64 and linux-x64 platforms.
+
+**Run Tests Locally**:
+```bash
+dotnet test
+```
+
+**Future Improvements**:
 - Integration tests for MQTT communication
-- Validation tests for coordinate conversions
+- Additional edge case coverage (see CODE_COVERAGE_IMPROVEMENTS.md)
 
 ## Troubleshooting
 

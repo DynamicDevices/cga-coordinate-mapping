@@ -14,21 +14,36 @@
 ### Major Features Added
 - ✅ **Logging Framework**: Replaced all `Console.WriteLine` with `Microsoft.Extensions.Logging`
   - Centralized `AppLogger` class for application-wide logging
-  - Configurable log levels via `LOG_LEVEL` environment variable
+  - Configurable log levels via `LOG_LEVEL` environment variable or `appsettings.json`
   - Structured logging with parameters
   - Timestamped output
-- ✅ **Unit Tests**: Comprehensive test suite with 25 tests
+- ✅ **Unit Tests**: Comprehensive test suite with **57 tests** (all passing)
   - VectorExtensions tests (11 tests)
   - UWB2GPSConverter tests (8 tests)
   - WGS84Converter tests (6 tests)
-  - Integrated into CI workflow
+  - AppConfig tests (6 tests)
+  - AppLogger tests (7 tests)
+  - VersionInfo tests (6 tests)
+  - Trilateration tests (13 tests)
+  - Integrated into CI workflow with automated test execution
 - ✅ **Semantic Versioning**: MAJOR.MINOR.PATCH versioning
   - Build date and git commit hash embedded in assembly
   - Version information displayed on startup
 - ✅ **CI/CD Enhancements**: 
-  - Test execution in CI pipeline
+  - ✅ **CI Pipeline Fully Working**: All tests pass (57/57)
+  - Test execution in CI pipeline for both linux-arm64 and linux-x64
   - Linux x64 binary builds in addition to ARM64
   - Automated artifact publishing
+  - Proper dependency restoration for test projects
+  - Test isolation fixes (logger disposal handling)
+- ✅ **Configuration Management**: 
+  - `appsettings.json` support for MQTT, application, and algorithm settings
+  - Dynamic beacon configuration from configuration file
+  - Environment variable overrides
+- ✅ **MQTT Resilience**:
+  - Exponential backoff retry logic for initial connection
+  - Automatic reconnection on disconnect
+  - Configurable retry attempts and delays
 
 ### Bug Fixes & Improvements
 - ✅ Fixed `isUpdating` flag bug - re-entrancy guard now works correctly
@@ -38,6 +53,9 @@
 - ✅ Optimized neighbor lookups from O(n²) to O(n) using dictionary
 - ✅ Fixed all build warnings (unused variables, async calls)
 - ✅ Made `EdgeErrorSquared` public for unit testing
+- ✅ Fixed CI test isolation issues (logger disposal handling)
+- ✅ Fixed dependency restoration in CI (separate restore for main and test projects)
+- ✅ Added ObjectDisposedException handling in UWB2GPSConverter for test robustness
 
 ## Core Functionality
 
@@ -167,10 +185,14 @@ graph TB
     end
     
     subgraph "Testing"
-        Tests[Unit Tests<br/>25 tests total]
+        Tests[Unit Tests<br/>57 tests total<br/>All passing ✅]
         VectorTests[VectorExtensions Tests<br/>11 tests]
         ConverterTests[UWB2GPSConverter Tests<br/>8 tests]
         WGS84Tests[WGS84Converter Tests<br/>6 tests]
+        ConfigTests[AppConfig Tests<br/>6 tests]
+        LoggerTests[AppLogger Tests<br/>7 tests]
+        VersionTests[VersionInfo Tests<br/>6 tests]
+        TrilatTests[Trilateration Tests<br/>13 tests]
     end
     
     subgraph "Output"
@@ -209,9 +231,16 @@ graph TB
     Tests -->|Tests| Vector
     Tests -->|Tests| Converter
     Tests -->|Tests| WGS84
+    Tests -->|Tests| Config
+    Tests -->|Tests| Logger
+    Tests -->|Tests| Version
     VectorTests -->|Validates| Vector
     ConverterTests -->|Validates| Converter
     WGS84Tests -->|Validates| WGS84
+    ConfigTests -->|Validates| Config
+    LoggerTests -->|Validates| Logger
+    VersionTests -->|Validates| Version
+    TrilatTests -->|Validates| Converter
     
     Logger -->|Output| Logs
     
@@ -331,9 +360,12 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 - Optimized O(n) neighbor lookups using dictionary
 - Edge endpoint resolution (handles both end0 and end1)
 - **Logging framework** (Microsoft.Extensions.Logging)
-- **Unit tests** (25 tests covering core functionality)
+- **Unit tests** (57 tests covering core functionality - all passing ✅)
 - **Semantic versioning** (with build date and git commit hash)
-- **Test execution in CI** (automated test runs)
+- **Test execution in CI** (automated test runs for both platforms)
+- **Configuration file support** (appsettings.json with environment variable overrides)
+- **MQTT retry and auto-reconnect** (exponential backoff, configurable retry logic)
+- **Dynamic beacon configuration** (beacons loaded from appsettings.json)
 
 ### 🔄 Future Improvements
 - ✅ Configuration file support (appsettings.json) - **COMPLETED**
@@ -369,11 +401,16 @@ These beacons serve as **reference points** for the trilateration algorithm. All
 ### Unit Tests
 - **Test Framework**: xUnit
 - **Test Project**: `tests/InstDotNet.Tests/`
-- **Coverage**: 25 tests total
+- **Coverage**: **57 tests total** (all passing ✅)
   - **VectorExtensionsTests** (11 tests): Vector math operations
   - **UWB2GPSConverterTests** (8 tests): Edge handling and error calculations
   - **WGS84ConverterTests** (6 tests): Coordinate conversion and length calculations
-- **CI Integration**: Tests run automatically in GitHub Actions
+  - **AppConfigTests** (6 tests): Configuration loading and validation
+  - **AppLoggerTests** (7 tests): Logging framework initialization and log level parsing
+  - **VersionInfoTests** (6 tests): Version information retrieval
+  - **TrilaterationTests** (13 tests): Core trilateration algorithm, beacon initialization, refinement
+- **CI Integration**: Tests run automatically in GitHub Actions for both linux-arm64 and linux-x64
+- **Test Status**: All 57 tests passing in CI ✅
 - **Run Tests Locally**: `dotnet test`
 
 ### Test Data
