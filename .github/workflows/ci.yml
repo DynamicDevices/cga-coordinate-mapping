@@ -37,7 +37,7 @@ jobs:
       run: dotnet build src/InstDotNet.csproj -c Release -r ${{ matrix.runtime }} -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
       
     - name: Restore test project dependencies
-      run: dotnet restore tests/InstDotNet.Tests.csproj
+      run: dotnet restore tests/InstDotNet.Tests.csproj --verbosity minimal
       
     - name: Build Tests
       run: dotnet build tests/InstDotNet.Tests.csproj -c Release -p:GitCommitHash=${{ steps.git.outputs.hash }} --no-restore
