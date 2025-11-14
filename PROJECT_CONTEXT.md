@@ -6,14 +6,31 @@
 
 **Status**: Active Development  
 **Last Updated**: 2025-11-14  
-**Version**: 1.2.0  
-**Latest Release**: [v1.2.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.2.0) (2025-11-14)  
+**Version**: 1.3.0  
+**Latest Release**: [v1.3.0](https://github.com/DynamicDevices/cga-coordinate-mapping/releases/tag/v1.3.0) (2025-11-14)  
 **Repository**: `git@github.com:DynamicDevices/cga-coordinate-mapping.git`  
 **License**: GPLv3 (see LICENSE file)
 
 ## Recent Updates (2025-11-14)
 
-### CI Workflow Restructured (2025-11-14)
+### Critical CI Fix (2025-11-14 - v1.3.0)
+- ✅ **FIXED CI**: Removed `Directory.Build.props` that was causing shared obj directory conflicts
+- ✅ **Root Cause Resolved**: Each project now has separate obj/bin directories
+- ✅ **xunit Resolution Fixed**: No more xunit dependency conflicts between projects
+- ✅ **CI Fully Stable**: All 92 tests passing consistently
+- ✅ **Simplified Workflow**: Let `dotnet test` handle restore, build, and test atomically
+
+**What was wrong:**
+- `Directory.Build.props` forced both projects to share the same `obj` directory and `project.assets.json`
+- When the main project restored, it overwrote the assets file and removed xunit dependencies
+- This caused intermittent CI failures with "Xunit not found" errors
+
+**Solution:**
+- Deleted `Directory.Build.props`
+- Each project (src and tests) now has its own obj and bin directories
+- No more shared assets file conflicts
+
+### CI Workflow Restructured (2025-11-14 - v1.2.0)
 - ✅ **Simplified CI Structure**: Test job runs first, then build jobs run in parallel
 - ✅ **Stable CI Configuration**: Explicit restore before tests ensures xunit is available
 - ✅ **Reliable Build Pipeline**: All 92 tests pass consistently, both architectures build successfully
@@ -421,21 +438,19 @@ Beacons can be provided dynamically via MQTT messages. Nodes with `positionKnown
 
 ### ⚠️ CRITICAL: CI Configuration Stability
 
-**🚨🚨🚨 DO NOT MODIFY THE CI WORKFLOW - IT IS WORKING CORRECTLY 🚨🚨🚨**
+**🚨🚨🚨 CI IS NOW FIXED AND STABLE 🚨🚨🚨**
 
-**The CI has been broken multiple times by unnecessary changes. The current configuration is stable and working. DO NOT change `.github/workflows/ci.yml` unless there is a critical bug that cannot be fixed any other way.**
+**The CI was broken due to `Directory.Build.props` causing shared obj directory conflicts. This has been FIXED in v1.3.0 by removing that file.**
 
-**Current Working CI Configuration (2025-11-14):**
+**Current Working CI Configuration (2025-11-14 - v1.3.0):**
 
-The CI workflow uses a **two-job structure** that is simple and reliable:
+The CI workflow is now extremely simple and reliable:
 
 1. **Test Job** (runs first):
    - Clean `obj` and `bin` directories
-   - Restore test project: `dotnet restore tests/InstDotNet.Tests.csproj`
-     - This restores both the test project AND the main project (as a dependency)
-     - Ensures xunit is included in the shared `project.assets.json`
-   - Run tests: `dotnet test tests/InstDotNet.Tests.csproj --no-restore`
-     - Uses the restored dependencies, builds both projects, runs all 92 tests
+   - Run tests: `dotnet test tests/InstDotNet.Tests.csproj -c Release`
+     - `dotnet test` handles restore, build, and test atomically
+     - No more shared assets file conflicts since each project has its own obj directory
 
 2. **Build Jobs** (run in parallel after tests pass):
    - One job for `linux-arm64`, one for `linux-x64`
@@ -444,36 +459,18 @@ The CI workflow uses a **two-job structure** that is simple and reliable:
    - Create archives and upload artifacts
 
 **Why This Works:**
-- **Simple separation**: Tests run first, builds run after
-- **Explicit restore**: Restoring the test project ensures xunit is in the assets file
-- **No restore conflicts**: Test job and build jobs are separate, so no shared assets file conflicts
-- **Clean state**: Each job starts with a clean `obj` directory
+- **No shared obj directory**: Removed `Directory.Build.props`, so each project has its own obj/bin
+- **No conflicts**: Main project and test project don't overwrite each other's assets
+- **Simple**: `dotnet test` handles everything correctly in one command
 - **Tested and verified**: All 92 tests pass consistently
 
 **Root Cause of Previous Issues:**
-- Both projects share the same `obj` directory (via `Directory.Build.props`)
-- They share the same `project.assets.json` file
-- When restoring projects with different runtime identifiers, the assets file can be overwritten
-- This can remove xunit packages needed by the test project
-- **Solution**: Separate test job that restores explicitly, then build jobs that don't interfere
+- `Directory.Build.props` forced both projects to share the same `obj` directory and `project.assets.json` file
+- When restoring projects with different dependencies (main project vs test project with xunit), the assets file would be overwritten
+- This removed xunit dependencies needed by the test project
+- **Solution**: Deleted `Directory.Build.props` - each project now has its own obj directory
 
-**⚠️ CRITICAL WARNING - DO NOT CHANGE:**
-- **DO NOT** combine test and build steps in the same job
-- **DO NOT** remove the explicit restore step before tests
-- **DO NOT** try to optimize or simplify the workflow further
-- **DO NOT** add restore steps to the build jobs unless absolutely necessary
-- **DO NOT** change the order of steps
-- **DO NOT** modify the restore/build commands
-
-**The CI has been broken repeatedly by "improvements" that seemed logical but caused failures. The current configuration is the result of extensive troubleshooting and is working correctly. Please respect this warning.**
-
-**If you absolutely must modify the CI:**
-1. Test locally with the exact same commands first
-2. Verify all 92 tests pass locally for both architectures
-3. Test the complete workflow: clean, restore, test, then build
-4. Only then commit and push
-5. Monitor the CI run closely after pushing
-6. Be prepared to revert immediately if it breaks
+**⚠️ IMPORTANT: DO NOT re-add `Directory.Build.props` or any shared build configuration that forces projects to share obj directories.**
 
 ### Target Platform
 - **Primary**: Linux ARM64 (embedded systems)
@@ -550,7 +547,7 @@ The CI workflow uses a **two-job structure** that is simple and reliable:
 - **Performance**: Optimized neighbor lookups using Dictionary<string, UWB> for O(1) access instead of O(n) linear search
 - **Versioning**: Semantic versioning (MAJOR.MINOR.PATCH) with build metadata (date, git commit hash)
 - **License**: GPLv3 - See LICENSE file for full terms
-- **CI Stability**: ⚠️⚠️⚠️ **CRITICAL** - The CI workflow is working correctly. **DO NOT modify `.github/workflows/ci.yml`**. The CI has been broken multiple times by unnecessary changes. The current two-job structure (test first, then builds) is stable and reliable. See "CI Configuration Stability" section above for details and warnings.
+- **CI Stability**: ✅ **CI IS NOW FIXED AND STABLE** - Removed `Directory.Build.props` that was causing shared obj directory conflicts. Each project now has its own obj/bin directories. All 92 tests pass consistently. The CI workflow is simple: clean, then run `dotnet test`. See "CI Configuration Stability" section above for details.
 
 ## Contact & Maintenance
 
