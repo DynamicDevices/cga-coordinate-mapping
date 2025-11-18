@@ -1,0 +1,63 @@
+name: CI Build for linux-arm64
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build linux-arm64 Artifacts
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+      
+    - name: Clean build artifacts
+      run: |
+        rm -rf obj bin publish
+      
+    - name: Build and Publish for linux-arm64
+      run: |
+        dotnet publish InstDotNet.csproj \
+          -c Release \
+          -r linux-arm64 \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -o bin/Release/net8.0/linux-arm64/publish
+      
+    - name: Verify build artifacts
+      run: |
+        echo "Build artifacts:"
+        ls -lh bin/Release/net8.0/linux-arm64/publish/
+        echo ""
+        echo "Main executable:"
+        file bin/Release/net8.0/linux-arm64/publish/InstDotNet
+        echo ""
+        echo "File size:"
+        du -h bin/Release/net8.0/linux-arm64/publish/InstDotNet
+      
+    - name: Create archive
+      run: |
+        cd bin/Release/net8.0/linux-arm64/publish
+        tar -czf ../../../../InstDotNet-linux-arm64.tar.gz .
+        cd ../../../../..
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: InstDotNet-linux-arm64
+        path: |
+          bin/Release/net8.0/linux-arm64/publish/
+          InstDotNet-linux-arm64.tar.gz
+        retention-days: 90
+
