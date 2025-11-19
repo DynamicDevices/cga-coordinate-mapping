@@ -16,8 +16,43 @@ public class UWB2GPSConverter
         public double[] latLonAlt;
         public bool positionKnown;
         public float lastPositionUpdateTime;
+        [System.NonSerialized] //Never needs to be sent externally
+        public float lastPositionUpdateTimeInternal;
         public List<Edge> edges;
-        public float positionAccuracy;
+        public float positionAccuracy; // in meters, optional accuracy estimate for the position
+
+        //All these are things that we get sent but atm don't need to send onward. 
+        //Can undeserialise later if we need them
+        [System.NonSerialized]
+        public string positionSource;
+        [System.NonSerialized]
+        public float positionConfidence;
+        [System.NonSerialized]
+        public float battery;
+        [System.NonSerialized]
+        public float temperature;
+        [System.NonSerialized]
+        public float humidity;
+        [System.NonSerialized]
+        public float rssi;
+        [System.NonSerialized]
+        public float snr;
+        [System.NonSerialized]
+        public float loraGatewayCount;
+        [System.NonSerialized]
+        public float loraFrameCount;
+        [System.NonSerialized]
+        public float loraPort;
+        [System.NonSerialized]
+        public string loraDeviceId;
+        [System.NonSerialized]
+        public float loraDataTimestamp;
+        [System.NonSerialized]
+        public string loraReceivedAt;
+        [System.NonSerialized]
+        public float lora_fix_type;
+        [System.NonSerialized]
+        public float lora_satellites;
 
         public UWB() { edges = new List<Edge>(); }  // ensures not null if JSON omits it
         public UWB(string id)
@@ -68,7 +103,7 @@ public class UWB2GPSConverter
         int totalNodesUpdated = 0;
 
         // 2. Find the 3 nodes with positionKnown == true
-        HashSet<UWB> knownNodes = new HashSet<UWB>();
+        List<UWB> knownNodes = new List<UWB>();
         foreach (UWB node in allNodes)
         {
             if (node.positionKnown)
@@ -76,7 +111,7 @@ public class UWB2GPSConverter
                 knownNodes.Add(node);
                 if (knownNodes.Count == 3) break;
             }
-            node.lastPositionUpdateTime = 0;
+            node.lastPositionUpdateTimeInternal = 0;
         }
 
         if (knownNodes.Count < 3)
@@ -85,14 +120,36 @@ public class UWB2GPSConverter
             return;
         }
 
-        // 3. Iteratively update positions for unknown nodes
+        //3. Get the positions of the known Nodes (beacons)
+        //Get latLonAlt ref point from the first known node
+        double refPointLat = knownNodes[0].latLonAlt[0];
+        double refPointLon = knownNodes[0].latLonAlt[1];
+        double refPointAlt = knownNodes[0].latLonAlt[2] / 1000d;
+        Vector3 refPos = knownNodes[0].position;
+        //Use that ref point to get the other two if they do not already have positions:
+        if (knownNodes[1].position == Vector3.Zero)
+        {
+            knownNodes[1].position =
+            WGS84Converter.LatLonAltkm2UnityPos(refPointLat, refPointLon, refPointAlt,
+            knownNodes[1].latLonAlt[0], knownNodes[1].latLonAlt[1], knownNodes[1].latLonAlt[2] / 1000d,
+            refPos);
+        }
+        if (knownNodes[2].position == Vector3.Zero)
+        {
+            knownNodes[2].position =
+            WGS84Converter.LatLonAltkm2UnityPos(refPointLat, refPointLon, refPointAlt,
+            knownNodes[2].latLonAlt[0], knownNodes[2].latLonAlt[1], knownNodes[2].latLonAlt[2] / 1000d,
+            refPos);
+        }
+
+        // 4. Iteratively update positions for unknown nodes
         bool progress = true;
         while (progress)
         {
             progress = false;
             foreach (UWB node in allNodes)
             {
-                if (node.positionKnown || node.lastPositionUpdateTime == timeNow) continue;
+                if (node.positionKnown || node.lastPositionUpdateTimeInternal == timeNow) continue;
 
                 // If the node is not known, try to update its position
                 UWB[] triangulationNodes = new UWB[3];
@@ -103,7 +160,7 @@ public class UWB2GPSConverter
                 {
                     if (TryGetEndFromEdge(edge, network, out UWB end))
                     {
-                        if (end.positionKnown || end.lastPositionUpdateTime == timeNow)
+                        if (end.positionKnown || end.lastPositionUpdateTimeInternal == timeNow)
                         {
                             triangulationNodes[index] = end;
                             distances[index] = edge.distance;
@@ -118,11 +175,6 @@ public class UWB2GPSConverter
                     //Debug.Log($"Not enough triangulation nodes yet for node {node.id} - skip over this time");
                     continue;
                 }
-                //Get latLonAlt ref point from the first known node
-                double refPointLat = triangulationNodes[0].latLonAlt[0];
-                double refPointLon = triangulationNodes[0].latLonAlt[1];
-                double refPointAlt = triangulationNodes[0].latLonAlt[2];
-                Vector3 refPos = triangulationNodes[0].position;
 
                 // Use the first three for triangulation
                 Vector3 p0 = triangulationNodes[0].position;
@@ -156,7 +208,7 @@ public class UWB2GPSConverter
                 node.position = p0 + x * ex + y * ey + z * ez;
                 node.latLonAlt = WGS84Converter.LatLonAltEstimate(refPointLat, refPointLon, refPointAlt, refPos, node.position);
                 //Debug.Log($"Position triangulated for node {node.id} to {node.position}\n");
-                node.lastPositionUpdateTime = timeNow;
+                node.lastPositionUpdateTime = node.lastPositionUpdateTimeInternal = timeNow;
                 totalNodesUpdated++;
                 progress = true;
             }
@@ -189,7 +241,7 @@ public class UWB2GPSConverter
                             }
                         }
 
-                        if (neighbour == null || !neighbour.lastPositionUpdateTime.Equals(timeNow)) continue;
+                        if (neighbour == null || !neighbour.lastPositionUpdateTimeInternal.Equals(timeNow)) continue;
 
                         float currentDist = Vector3.Distance(node.position, neighbour.position);
                         float error = currentDist - edge.distance;
@@ -209,7 +261,7 @@ public class UWB2GPSConverter
                     if (newError < oldError)
                     {
                         improved = true;
-                        node.lastPositionUpdateTime = timeNow;
+                        node.lastPositionUpdateTimeInternal = timeNow;
                         //Debug.Log($"Position improved for node {node.id} to {node.position}\n");
                     }
                     else
@@ -219,6 +271,18 @@ public class UWB2GPSConverter
                 }
 
                 if (!improved) break;
+            }
+        }
+
+        // 5. Update relative positions for any nodes that have latLons but no relative position - ust have come in with 'positionKnown = true' so weren't triangulated
+        foreach (UWB node in allNodes)
+        {
+            if (node.position == Vector3.Zero && node.latLonAlt != null && node.latLonAlt.Length == 3)
+            {
+                node.position =
+                WGS84Converter.LatLonAltkm2UnityPos(refPointLat, refPointLon, refPointAlt,
+                node.latLonAlt[0], node.latLonAlt[1], node.latLonAlt[2] / 1000d,
+                refPos);
             }
         }
 
@@ -232,16 +296,18 @@ public class UWB2GPSConverter
         total *= 0.5f;
 
         Console.WriteLine($"UWB to GPS conversion completed. Updated {totalNodesUpdated}/{totalNodes} positions. Average error: {totalError / total}m.");
-        if (totalNodesUpdated + 3 < totalNodes)
+        string m = "Could not triangulate nodes: ";
+        bool foundUntriangulated = false;
+        foreach (UWB node in allNodes)
         {
-            string m = "Could not triangulate nodes: ";
-            foreach (UWB node in allNodes)
+            if (!node.positionKnown && node.lastPositionUpdateTimeInternal < timeNow)
             {
-                if (!node.positionKnown && node.lastPositionUpdateTime < timeNow)
-                {
-                    m += $"{node.id}, ";
-                }
+                m += $"{node.id}, ";
+                foundUntriangulated = true;
             }
+        }
+        if (foundUntriangulated)
+        {
             Console.WriteLine(m);
         }
 

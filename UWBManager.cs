@@ -39,10 +39,10 @@ public class UWBManager
         {
             Console.Error.WriteLine($"Failed to parse mqtt message into uwb network: {e.Message}");
             return;
-        }        
+        }
 
         // don't run UpdateUwbs on the MQTT thread — defer to main thread
-        
+
     }
 
     public static void Update()
@@ -88,7 +88,7 @@ public class UWBManager
 
     private static void SendNetwork(UWB2GPSConverter.Network sendNetwork)
     {
-        Console.WriteLine($"Sending network with {sendNetwork.uwbs.Length} uwbs.");
+        Console.WriteLine($"Sending network with {sendNetwork.uwbs.Length}/{network.uwbs.Length} uwbs.");
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
         MQTTControl.Publish(data);
     }

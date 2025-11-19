@@ -12,12 +12,12 @@ class Program
         await MQTTControl.Initialise(cts);
         UWBManager.Initialise();
 
-        //Try loading from Python-generated file if it exists
-        // string filePath = "TestNodes.json";
+        //Try loading from test file if it exists
+        //string filePath = "network_latest_output_from_uwbs_from_alex.json";
+        // string filePath = "network_made_from_python_parser.json";
         // if (System.IO.File.Exists(filePath))
         // {
-        //     //Console.WriteLine("Loading UWB network from Python-generated file...");       //     
-        //     Console.WriteLine("Loading UWB network from my TestNodes...");       //     
+        //     Console.WriteLine($"Loading UWB network from {filePath}...");       //     
 
         //     try
         //     {
@@ -30,7 +30,7 @@ class Program
         //         Console.Error.WriteLine($"Failed to load UWB network from file: {e.Message}");
         //     }
         // }
-        
+
 
         // Run one immediate update, then start a background loop to update repeatedly
         UWBManager.Update();
@@ -66,4 +66,4 @@ class Program
     }
 }
 
-    
+
