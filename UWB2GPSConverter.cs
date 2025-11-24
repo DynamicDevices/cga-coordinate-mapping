@@ -16,42 +16,24 @@ public class UWB2GPSConverter
         public double[] latLonAlt;
         public bool positionKnown;
         public float lastPositionUpdateTime;
-        [System.NonSerialized] //Never needs to be sent externally
+        [JsonIgnore] //Never needs to be sent externally
         public float lastPositionUpdateTimeInternal;
         public List<Edge> edges;
         public float positionAccuracy; // in meters, optional accuracy estimate for the position
-
-        //All these are things that we get sent but atm don't need to send onward. 
-        //Can undeserialise later if we need them
-        [System.NonSerialized]
         public string positionSource;
-        [System.NonSerialized]
         public float positionConfidence;
-        [System.NonSerialized]
         public float battery;
-        [System.NonSerialized]
         public float temperature;
-        [System.NonSerialized]
         public float humidity;
-        [System.NonSerialized]
         public float rssi;
-        [System.NonSerialized]
         public float snr;
-        [System.NonSerialized]
         public float loraGatewayCount;
-        [System.NonSerialized]
         public float loraFrameCount;
-        [System.NonSerialized]
         public float loraPort;
-        [System.NonSerialized]
         public string loraDeviceId;
-        [System.NonSerialized]
         public float loraDataTimestamp;
-        [System.NonSerialized]
         public string loraReceivedAt;
-        [System.NonSerialized]
         public float lora_fix_type;
-        [System.NonSerialized]
         public float lora_satellites;
 
         public UWB() { edges = new List<Edge>(); }  // ensures not null if JSON omits it
