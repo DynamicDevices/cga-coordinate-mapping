@@ -1,4 +1,5 @@
-﻿// Program.cs  (net8.0, MQTTnet 5.x)
+﻿#nullable enable
+// Program.cs  (net8.0, MQTTnet 5.x)
 using System.Text.Json;
 using InstDotNet;
 
