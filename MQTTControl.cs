@@ -6,17 +6,11 @@ using System.Threading.Tasks;
 using MQTTnet;
 using MQTTnet.Packets;   // for v5 subscribe options if needed
 using MQTTnet.Protocol;  // QoS enums
+using InstDotNet;
 
 public class MQTTControl
 {
     public const string DEFAULT_CLIENT_ID = "clientId-UwbManager-001";
-    public const string DEFAULT_SERVER_ADDRESS = "mqtt.dynamicdevices.co.uk";
-    public const string DEFAULT_USERNAME = "";
-    public const string DEFAULT_PASSWORD = "";
-    public const int DEFAULT_SERVER_PORT = 1883;
-    public const string DEFAULT_RECEIVE_MESSAGE_TOPIC = "DotnetMQTT/Test/in";
-    public const string DEFAULT_SEND_MESSAGE_TOPIC = "DotnetMQTT/Test/out";
-    public const int DEFAULT_TIMEOUT_IN_SECONDS = 10; //not currently being used - need to for safety?
     private static string _clientId;
     private static string _serverAddress;
     private static string _usernname;
@@ -25,7 +19,7 @@ public class MQTTControl
     private static string _receiveMessageTopic;
     private static string _sendMessageTopic;
     private static int _timeoutInSeconds;
-
+    private static int _keepAlivePeriodSeconds;
 
     public static System.Action<string> OnMessageReceived;
 
@@ -33,25 +27,49 @@ public class MQTTControl
     private static CancellationTokenSource _cts;
 
     // Return Task so callers can await completion and observe exceptions
-    public static async Task Initialise(CancellationTokenSource cts,
-        string clientId = DEFAULT_CLIENT_ID,
-        string serverAddress = DEFAULT_SERVER_ADDRESS,
-        int port = DEFAULT_SERVER_PORT,
-        string username = DEFAULT_USERNAME,
-        string password = DEFAULT_PASSWORD,
-        string receiveMessageTopic = DEFAULT_RECEIVE_MESSAGE_TOPIC,
-        string sendMessageTopic = DEFAULT_SEND_MESSAGE_TOPIC,
-        int timeoutSeconds = DEFAULT_TIMEOUT_IN_SECONDS)
+    public static async Task Initialise(CancellationTokenSource cts, AppConfig? config = null)
     {
         _cts = cts ?? new CancellationTokenSource();
-        _clientId = clientId;
-        _serverAddress = serverAddress;
-        _port = port;
-        _usernname = username;
-        _password = password;
-        _receiveMessageTopic = receiveMessageTopic;
-        _sendMessageTopic = sendMessageTopic;
-        _timeoutInSeconds = timeoutSeconds;
+        
+        if (config != null)
+        {
+            _serverAddress = config.MQTT.ServerAddress;
+            _port = config.MQTT.Port;
+            _usernname = config.MQTT.Username;
+            _password = config.MQTT.Password;
+            _receiveMessageTopic = config.MQTT.ReceiveTopic;
+            _sendMessageTopic = config.MQTT.SendTopic;
+            _timeoutInSeconds = config.MQTT.TimeoutSeconds;
+            _keepAlivePeriodSeconds = config.MQTT.KeepAlivePeriodSeconds;
+            
+            // Use configured client ID, or generate from hardware ID if empty
+            if (string.IsNullOrWhiteSpace(config.MQTT.ClientId))
+            {
+                var baseClientId = HardwareId.GetMqttClientId("UwbManager");
+                var processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+                _clientId = $"{baseClientId}-pid{processId}";
+                Console.WriteLine($"Using hardware-based MQTT client ID: {_clientId} (PID: {processId})");
+            }
+            else
+            {
+                _clientId = config.MQTT.ClientId;
+            }
+        }
+        else
+        {
+            // Fallback to defaults if no config provided
+            _serverAddress = "mqtt.dynamicdevices.co.uk";
+            _port = 1883;
+            _usernname = "";
+            _password = "";
+            _receiveMessageTopic = "DotnetMQTT/Test/in";
+            _sendMessageTopic = "DotnetMQTT/Test/out";
+            _timeoutInSeconds = 10;
+            _keepAlivePeriodSeconds = 60;
+            var baseClientId = HardwareId.GetMqttClientId("UwbManager");
+            var processId = System.Diagnostics.Process.GetCurrentProcess().Id;
+            _clientId = $"{baseClientId}-pid{processId}";
+        }
 
         var factory = new MqttClientFactory();
         client = factory.CreateMqttClient();
@@ -90,7 +108,9 @@ public class MQTTControl
         var builder = new MqttClientOptionsBuilder()
             .WithClientId(_clientId)
             .WithTcpServer(_serverAddress, _port)
-            .WithCleanSession();
+            .WithCleanSession()
+            .WithTimeout(TimeSpan.FromSeconds(_timeoutInSeconds))
+            .WithKeepAlivePeriod(TimeSpan.FromSeconds(_keepAlivePeriodSeconds));
 
         // Add credentials only if provided
         if (!string.IsNullOrWhiteSpace(_usernname) && !string.IsNullOrWhiteSpace(_password))

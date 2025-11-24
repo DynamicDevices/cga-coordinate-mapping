@@ -1,9 +1,10 @@
 ﻿// Program.cs  (net8.0, MQTTnet 5.x)
 using System.Text.Json;
+using InstDotNet;
 
 class Program
 {
-
+    static AppConfig? _config;
 
     static async Task Main()
     {
@@ -11,9 +12,30 @@ class Program
         Console.WriteLine($"CGA Coordinate Mapping - Version {VersionInfo.FullVersion}");
         Console.WriteLine();
 
+        // Load configuration
+        try
+        {
+            _config = AppConfig.Load();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to load configuration: {ex.Message}");
+            Console.Error.WriteLine("Using default configuration values");
+            _config = new AppConfig();
+        }
+
+        // Get board ID and resolve placeholders
+        var boardId = HardwareId.GetMqttClientId("UwbManager");
+        _config.ResolvePlaceholders(boardId);
+        
+        Console.WriteLine($"Board ID: {boardId}");
+        Console.WriteLine($"MQTT Receive Topic: {_config.MQTT.ReceiveTopic}");
+        Console.WriteLine($"MQTT Send Topic: {_config.MQTT.SendTopic}");
+        Console.WriteLine();
+
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
-        await MQTTControl.Initialise(cts);
+        await MQTTControl.Initialise(cts, _config);
         UWBManager.Initialise();
 
         //Try loading from test file if it exists
@@ -39,8 +61,8 @@ class Program
         // Run one immediate update, then start a background loop to update repeatedly
         UWBManager.Update();
 
-        // Interval between updates in milliseconds (few ms as requested)
-        const int updateIntervalMs = 10;
+        // Interval between updates from configuration
+        int updateIntervalMs = _config?.Application.UpdateIntervalMs ?? 10;
 
         // Start background loop that will run until Ctrl+C cancels the token
         _ = Task.Run(async () =>
