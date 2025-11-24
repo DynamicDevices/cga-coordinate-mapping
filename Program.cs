@@ -35,6 +35,22 @@ class Program
 
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+
+        // Initialize health check
+        HealthCheck.Initialize();
+        
+        // Start health check server
+        int healthCheckPort = _config?.Application.HealthCheckPort ?? 8080;
+        try
+        {
+            HealthCheckServer.Start(healthCheckPort);
+            Console.WriteLine($"Health check endpoint available at http://localhost:{healthCheckPort}/health");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to start health check server on port {healthCheckPort}, continuing without health endpoint: {ex.Message}");
+        }
+
         await MQTTControl.Initialise(cts, _config);
         UWBManager.Initialise();
 
@@ -88,6 +104,8 @@ class Program
         Console.WriteLine("Press Ctrl+C to exit…");
         try { await Task.Delay(Timeout.Infinite, cts.Token); } catch { }
 
+        Console.WriteLine("Shutting down...");
+        HealthCheckServer.Stop();
         await MQTTControl.DisconnectAsync();
     }
 }
