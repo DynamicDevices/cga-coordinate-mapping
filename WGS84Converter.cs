@@ -179,8 +179,8 @@ public class WGS84Converter
 
         double flatgd;
         double[] rrnrm = new double[3];
-        double rn, ecc, esq;
-        double tlat;
+        double re, rn, ecc, esq;
+        double slat, clat, tlat;
         double altnow, ratio;
 
         geodGBL();
@@ -232,8 +232,8 @@ public class WGS84Converter
 
         double flatgc;
         double[] rrnrm = new double[3];
-        double rn, ecc, esq;
-        double tlat;
+        double re, rn, ecc, esq;
+        double slat, clat, tlat;
         double altnow, ratio;
 
         geodGBL();
@@ -356,7 +356,7 @@ public class WGS84Converter
         double flatgc, flatn, dlat;
         double rnow, rp;
         double x, y, z, p;
-        double tangd;
+        double tangc, tangd;
 
         double testval;
 
