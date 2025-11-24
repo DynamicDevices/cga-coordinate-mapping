@@ -202,5 +202,13 @@ public class MQTTControl
         OnMessageReceived?.Invoke(message);
     }
 
+    /// <summary>
+    /// Check if MQTT client is connected
+    /// </summary>
+    public static bool IsConnected()
+    {
+        return client != null && client.IsConnected;
+    }
+
 }
         

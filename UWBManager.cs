@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text.Json;
-
+using InstDotNet;
 
 public class UWBManager
 {
@@ -60,6 +60,7 @@ public class UWBManager
             Console.WriteLine("UpdateUwbs: already updating — skipping re-entrant call.");
             return;
         }
+        isUpdating = true;
 
         UWB2GPSConverter.ConvertUWBToPositions(network, true);
 
@@ -80,6 +81,11 @@ public class UWBManager
             }
         }
         sendNetwork = new UWB2GPSConverter.Network(sendUwbsList.ToArray());
+
+        // Update health check
+        HealthCheck.UpdateLastProcessTime();
+        HealthCheck.UpdateBeaconCount(sendNetwork.uwbs.Length);
+        HealthCheck.IncrementNodesProcessed(network.uwbs.Length);
 
         SendNetwork(sendNetwork);
         isUpdating = false;
