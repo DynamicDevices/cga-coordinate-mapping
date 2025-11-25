@@ -96,7 +96,7 @@ public class UWBManager
     {
         Console.WriteLine($"Sending network with {sendNetwork.uwbs.Length}/{network.uwbs.Length} uwbs.");
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
-        MQTTControl.Publish(data);
+        _ = MQTTControl.Publish(data); // Fire and forget - don't await to avoid blocking
     }
 }
 

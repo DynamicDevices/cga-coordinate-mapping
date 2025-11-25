@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Buffers;
 using System.Text;
@@ -11,20 +12,20 @@ using InstDotNet;
 public class MQTTControl
 {
     public const string DEFAULT_CLIENT_ID = "clientId-UwbManager-001";
-    private static string _clientId;
-    private static string _serverAddress;
-    private static string _usernname;
-    private static string _password;
+    private static string _clientId = string.Empty;
+    private static string _serverAddress = string.Empty;
+    private static string _usernname = string.Empty;
+    private static string _password = string.Empty;
     private static int _port;
-    private static string _receiveMessageTopic;
-    private static string _sendMessageTopic;
+    private static string _receiveMessageTopic = string.Empty;
+    private static string _sendMessageTopic = string.Empty;
     private static int _timeoutInSeconds;
     private static int _keepAlivePeriodSeconds;
 
-    public static System.Action<string> OnMessageReceived;
+    public static System.Action<string>? OnMessageReceived;
 
-    private static IMqttClient client;
-    private static CancellationTokenSource _cts;
+    private static IMqttClient? client;
+    private static CancellationTokenSource? _cts;
 
     // Return Task so callers can await completion and observe exceptions
     public static async Task Initialise(CancellationTokenSource cts, AppConfig? config = null)
@@ -187,7 +188,14 @@ public class MQTTControl
 
         try
         {
-            await client.PublishAsync(messageOut, _cts.Token).ConfigureAwait(false);
+            if (_cts != null)
+            {
+                await client.PublishAsync(messageOut, _cts.Token).ConfigureAwait(false);
+            }
+            else
+            {
+                await client.PublishAsync(messageOut).ConfigureAwait(false);
+            }
             Console.WriteLine("MQTT: Published.");
         }
         catch (Exception ex)
