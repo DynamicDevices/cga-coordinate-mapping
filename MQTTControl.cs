@@ -251,6 +251,7 @@ public class MQTTControl
                 .WithTopic(versionTopic)
                 .WithPayload(jsonPayload)
                 .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce)
+                .WithRetainFlag(true)
                 .Build();
 
             if (_cts != null)
