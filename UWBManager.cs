@@ -75,10 +75,10 @@ public class UWBManager
         }
         foreach (UWB2GPSConverter.UWB uwb in network.uwbs)
         {
-            if (uwb.latLonAlt != null && uwb.latLonAlt.Length == 3 && uwb.latLonAlt[0] != 0 && uwb.latLonAlt[1] != 0 && uwb.positionAccuracy != -1)
-            {
+            //if (uwb.latLonAlt != null && uwb.latLonAlt.Length == 3 && uwb.latLonAlt[0] != 0 && uwb.latLonAlt[1] != 0 && uwb.positionAccuracy != -1)
+            //{
                 sendUwbsList.Add(uwb);
-            }
+            //}
         }
         sendNetwork = new UWB2GPSConverter.Network(sendUwbsList.ToArray());
 
