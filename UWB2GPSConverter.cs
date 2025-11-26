@@ -9,8 +9,7 @@ public class UWB2GPSConverter
     public class UWB
     {
         public string id;
-        public TriageStatus triageStatus;
-        public enum TriageStatus { unknown, responder, unconscious, injured, deceased, beacon }
+        public int triageStatus;
         [JsonIgnore]
         public Vector3 position;
         public double[] latLonAlt;
