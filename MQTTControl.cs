@@ -2,6 +2,7 @@
 using System;
 using System.Buffers;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MQTTnet;
@@ -94,10 +95,12 @@ public class MQTTControl
             return Task.CompletedTask;
         };
 
-        client.ConnectedAsync += e =>
+        client.ConnectedAsync += async e =>
         {
             Console.WriteLine("MQTT: Connected.");
-            return Task.CompletedTask;
+            // Publish version information to version subtopic
+            await PublishVersionInfo().ConfigureAwait(false);
+            return;
         };
 
         client.DisconnectedAsync += e =>
@@ -201,6 +204,69 @@ public class MQTTControl
         catch (Exception ex)
         {
             Console.WriteLine($"MQTT: Publish error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Publishes version and build information as JSON to the version subtopic
+    /// </summary>
+    private static async Task PublishVersionInfo()
+    {
+        if (client == null || !client.IsConnected)
+        {
+            Console.WriteLine("MQTT: Version info publish skipped - client not connected.");
+            return;
+        }
+
+        try
+        {
+            // Create version info object
+            var versionInfo = new
+            {
+                version = VersionInfo.Version,
+                assemblyVersion = VersionInfo.AssemblyVersion,
+                fileVersion = VersionInfo.FileVersion,
+                informationalVersion = VersionInfo.InformationalVersion,
+                buildDate = VersionInfo.BuildDate,
+                gitCommitHash = VersionInfo.GitCommitHash,
+                fullVersion = VersionInfo.FullVersion,
+                clientId = _clientId,
+                timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            };
+
+            // Serialize to JSON
+            var jsonOptions = new JsonSerializerOptions
+            {
+                WriteIndented = false,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+            var jsonPayload = JsonSerializer.Serialize(versionInfo, jsonOptions);
+
+            // Construct version topic as subtopic of SendTopic
+            var versionTopic = string.IsNullOrEmpty(_sendMessageTopic) 
+                ? "version" 
+                : $"{_sendMessageTopic}/version";
+
+            var messageOut = new MqttApplicationMessageBuilder()
+                .WithTopic(versionTopic)
+                .WithPayload(jsonPayload)
+                .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce)
+                .WithRetainFlag(true)
+                .Build();
+
+            if (_cts != null)
+            {
+                await client.PublishAsync(messageOut, _cts.Token).ConfigureAwait(false);
+            }
+            else
+            {
+                await client.PublishAsync(messageOut).ConfigureAwait(false);
+            }
+            Console.WriteLine($"MQTT: Published version info to {versionTopic}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"MQTT: Version info publish error: {ex.Message}");
         }
     }
 
