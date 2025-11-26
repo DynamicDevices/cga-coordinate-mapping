@@ -88,7 +88,7 @@ public class UWB2GPSConverter
         List<UWB> knownNodes = new List<UWB>();
         foreach (UWB node in allNodes)
         {
-            if (node.positionKnown)
+            if (node.positionKnown && node.latLonAlt != null && node.latLonAlt.Length == 3 && node.latLonAlt[0] != 0 && node.latLonAlt[1] != 0)
             {
                 knownNodes.Add(node);
                 if (knownNodes.Count == 3) break;
@@ -112,7 +112,7 @@ public class UWB2GPSConverter
         //Use that ref point to get all relative position of any nodes that have latLonAlts
         foreach (UWB node in allNodes)
         {
-            if (node.position == Vector3.Zero && node.latLonAlt != null && node.latLonAlt.Length == 3)
+            if (node != knownNodes[0] && node.latLonAlt != null && node.latLonAlt.Length == 3 && node.latLonAlt[0] != 0 && node.latLonAlt[1] != 0)
             {
                 node.position =
                 WGS84Converter.LatLonAltkm2UnityPos(refPointLat, refPointLon, refPointAlt,
