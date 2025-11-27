@@ -16,7 +16,7 @@ public class UWB2GPSConverter
         public bool positionKnown;
         public float lastPositionUpdateTime;
         [JsonIgnore] //Never needs to be sent externally
-        public float lastPositionUpdateTimeInternal;
+        public bool positionFoundThisPass;
         public List<Edge> edges;
         public float positionAccuracy; // in meters, optional accuracy estimate for the position
         public string positionSource;
@@ -92,7 +92,7 @@ public class UWB2GPSConverter
                 knownNodes.Add(node);
                 if (knownNodes.Count == 3) break;
             }
-            node.lastPositionUpdateTimeInternal = 0;
+            node.positionFoundThisPass = false;
         }
 
         if (knownNodes.Count < 3)
@@ -107,7 +107,7 @@ public class UWB2GPSConverter
         double refPointLon = knownNodes[0].latLonAlt[1];
         double refPointAlt = knownNodes[0].latLonAlt[2] / 1000d;
         Vector3 refPos = knownNodes[0].position;
-        knownNodes[0].lastPositionUpdateTime = knownNodes[0].lastPositionUpdateTimeInternal = timeNow;
+        knownNodes[0].positionFoundThisPass = true;
         //Use that ref point to get all relative position of any nodes that have latLonAlts
         foreach (UWB node in allNodes)
         {
@@ -117,7 +117,7 @@ public class UWB2GPSConverter
                 WGS84Converter.LatLonAltkm2UnityPos(refPointLat, refPointLon, refPointAlt,
                 node.latLonAlt[0], node.latLonAlt[1], node.latLonAlt[2] / 1000d,
                 refPos);
-                node.lastPositionUpdateTime = node.lastPositionUpdateTimeInternal = timeNow;
+                node.positionFoundThisPass = true;
             }
         }
 
@@ -128,7 +128,7 @@ public class UWB2GPSConverter
             progress = false;
             foreach (UWB node in allNodes)
             {
-                if (node.lastPositionUpdateTimeInternal == timeNow) continue;
+                if (node.positionFoundThisPass) continue;
 
                 // If the node is not known, try to update its position
                 UWB[] triangulationNodes = new UWB[3];
@@ -139,7 +139,7 @@ public class UWB2GPSConverter
                 {
                     if (TryGetEndFromEdge(edge, network, out UWB end))
                     {
-                        if (end.lastPositionUpdateTimeInternal == timeNow)
+                        if (end.positionFoundThisPass)
                         {
                             triangulationNodes[index] = end;
                             distances[index] = edge.distance;
@@ -185,9 +185,7 @@ public class UWB2GPSConverter
                 float z = zSquared > 0 ? (float)Math.Sqrt(zSquared) : 0;
 
                 node.position = p0 + x * ex + y * ey + z * ez;
-                node.latLonAlt = WGS84Converter.LatLonAltEstimate(refPointLat, refPointLon, refPointAlt, refPos, node.position);
-                //Debug.Log($"Position triangulated for node {node.id} to {node.position}\n");
-                node.lastPositionUpdateTime = node.lastPositionUpdateTimeInternal = timeNow;
+                node.positionFoundThisPass = true;
                 totalNodesUpdated++;
                 progress = true;
             }
@@ -220,7 +218,7 @@ public class UWB2GPSConverter
                             }
                         }
 
-                        if (neighbour == null || !neighbour.lastPositionUpdateTimeInternal.Equals(timeNow)) continue;
+                        if (neighbour == null || !neighbour.positionFoundThisPass) continue;
 
                         float currentDist = Vector3.Distance(node.position, neighbour.position);
                         float error = currentDist - edge.distance;
@@ -240,7 +238,6 @@ public class UWB2GPSConverter
                     if (newError < oldError)
                     {
                         improved = true;
-                        node.lastPositionUpdateTimeInternal = timeNow;
                         //Debug.Log($"Position improved for node {node.id} to {node.position}\n");
                     }
                     else
@@ -253,30 +250,104 @@ public class UWB2GPSConverter
             }
         }
 
+
+
         float totalError = 0;
         float total = 0;
         foreach (UWB node in network.uwbs)
         {
+            if (!node.positionKnown && node.positionFoundThisPass)
+            {
+                node.latLonAlt = WGS84Converter.LatLonAltEstimate(refPointLat, refPointLon, refPointAlt, refPos, node.position);
+                UWBManager.AddToDebugMessage($"Position triangulated for node {node.id} to {node.position}");
+                node.lastPositionUpdateTime = timeNow;
+            }
             totalError += NodeError(node, network);
             total++;
         }
         total *= 0.5f;
 
-        Console.WriteLine($"UWB to GPS conversion completed. Updated {totalNodesUpdated}/{totalNodes} positions. Average error: {totalError / total}m.");
-        string m = "Could not triangulate nodes: ";
-        bool foundUntriangulated = false;
+        string m = $"UWB to GPS conversion completed. Updated {totalNodesUpdated}/{totalNodes} positions. Average error: {totalError / total}m.";
+        List<UWB> untriangulated = new List<UWB>();
+        List<UWB> badTags = new List<UWB>();
+        List<UWB> badAnchorsEdges = new List<UWB>();
+        List<UWB> badAnchorsLatLons = new List<UWB>();
         foreach (UWB node in allNodes)
         {
-            if (node.lastPositionUpdateTimeInternal < timeNow)
+            if (!node.positionFoundThisPass)
             {
-                m += $"{node.id}, ";
-                foundUntriangulated = true;
+                untriangulated.Add(node);
+            }
+            int numEdges = node.edges.Count();
+            if (node.positionKnown)
+            {
+                if (numEdges < 3)
+                {
+                    badAnchorsEdges.Add(node);
+                }
+                else if (node.latLonAlt == null || node.latLonAlt.Length != 3 || node.latLonAlt[0] == 0 || node.latLonAlt[1] == 0)
+                {
+                    badAnchorsLatLons.Add(node);
+                }
+            }
+            else
+            {
+                if (numEdges < 3)
+                {
+                    badTags.Add(node);
+                }
             }
         }
-        if (foundUntriangulated)
+
+        int numUntriangulated = untriangulated.Count;
+        if (numUntriangulated == 0)
         {
-            Console.WriteLine(m);
+            m += $"\n All nodes triangulated.";
         }
+        else
+        {
+            m += $"\n {numUntriangulated} nodes not triangulated: ";
+            foreach (UWB node in untriangulated)
+            {
+                m += $"{node.id}, ";
+            }
+
+            m += $"\n Triangulation Failure Reasons: ";
+            bool foundReason = false;
+            if (badTags.Count > 0)
+            {
+                m += $"\n Tags found with less than 3 edges: ";
+                foreach (UWB node in badTags)
+                {
+                    m += node.id + ", ";
+                }
+                foundReason = true;
+            }
+            if (badAnchorsEdges.Count > 0)
+            {
+                m += $"\n Anchors found with less than 3 edges: ";
+                foreach (UWB node in badAnchorsEdges)
+                {
+                    m += node.id + ", ";
+                }
+                foundReason = true;
+            }
+            if (badAnchorsLatLons.Count > 0)
+            {
+                m += $"\n Anchors found with no latLonAlts: ";
+                foreach (UWB node in badAnchorsLatLons)
+                {
+                    m += node.id + ", ";
+                }
+                foundReason = true;
+            }
+            if(!foundReason)
+            {
+                m += $"\n No obvious reason found - Network is probably in more than one cluster - disjointed groups. If you get this message and want further information, much deeper debug code will need to be written to verify.";
+            }
+        }
+
+        UWBManager.AddToDebugMessage(m);        
 
     }
 

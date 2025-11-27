@@ -169,7 +169,11 @@ public class MQTTControl
         }
     }
 
-    public static async Task Publish(string message)
+    public static async Task PublishDebugMessage(string message)
+    {
+        await Publish(message, "debug");
+    }
+    public static async Task Publish(string message, string channel = "")
     {
         if (client == null)
         {
@@ -183,8 +187,14 @@ public class MQTTControl
             return;
         }
 
+        string sendTopic = _sendMessageTopic;
+        if (channel != "")
+        {
+            sendTopic += "/" + channel;
+        }
+
         var messageOut = new MqttApplicationMessageBuilder()
-            .WithTopic(_sendMessageTopic)
+            .WithTopic(sendTopic)
             .WithPayload(message)
             .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce)
             .Build();

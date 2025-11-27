@@ -57,22 +57,24 @@ class Program
 
         //Try loading from test file if it exists
         //string filePath = "network_latest_output_from_uwbs_from_alex.json";
-        // string filePath = "network_made_from_python_parser.json";
-        // if (System.IO.File.Exists(filePath))
-        // {
-        //     Console.WriteLine($"Loading UWB network from {filePath}...");       //     
+        //string filePath = "network_made_from_python_parser.json";
+        string filePath = "network_bad_data_test.json";
+        //string filePath = "network_good_data_test.json";
+        if (System.IO.File.Exists(filePath))
+        {
+            Console.WriteLine($"Loading UWB network from {filePath}...");       //     
 
-        //     try
-        //     {
-        //         string json = System.IO.File.ReadAllText(filePath);
-        //         UWBManager.UpdateUwbsFromMessage(json);
-        //         Console.WriteLine($"Loaded UWB network from {filePath}");
-        //     }
-        //     catch (System.Exception e)
-        //     {
-        //         Console.Error.WriteLine($"Failed to load UWB network from file: {e.Message}");
-        //     }
-        // }
+            try
+            {
+                string json = System.IO.File.ReadAllText(filePath);
+                UWBManager.UpdateUwbsFromMessage(json);
+                Console.WriteLine($"Loaded UWB network from {filePath}");
+            }
+            catch (System.Exception e)
+            {
+                Console.Error.WriteLine($"Failed to load UWB network from file: {e.Message}");
+            }
+        }
 
 
         // Run one immediate update, then start a background loop to update repeatedly

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Text.Json;
 using InstDotNet;
@@ -12,6 +13,7 @@ public class UWBManager
     private static volatile bool updateNetworkTrigger = false;
     private static bool isUpdating = false;
     private static JsonSerializerOptions jsonOptions;
+    private static string debugMessageOut = "";
 
     public static void Initialise()
     {
@@ -25,24 +27,25 @@ public class UWBManager
         };
         MQTTControl.OnMessageReceived -= UpdateUwbsFromMessage;
         MQTTControl.OnMessageReceived += UpdateUwbsFromMessage;
+        debugMessageOut = "";
     }
 
     public static void UpdateUwbsFromMessage(string message)
     {
+        debugMessageOut = "";
         try
         {
             network = JsonSerializer.Deserialize<UWB2GPSConverter.Network>(message, jsonOptions);
-            Console.WriteLine($"Successfully parsed mqtt message into uwb network. Found {network.uwbs.Length} uwbs.");
+            AddToDebugMessage($"Successfully parsed mqtt message into uwb network. Found {network.uwbs.Length} uwbs.");
+
+            // don't run UpdateUwbs on the MQTT thread — defer to main thread
             updateNetworkTrigger = true;
         }
         catch (System.Exception e)
         {
-            Console.Error.WriteLine($"Failed to parse mqtt message into uwb network: {e.Message}");
+            AddToDebugMessage($"Failed to parse mqtt message into uwb network. Error: {e}", true);
             return;
-        }
-
-        // don't run UpdateUwbs on the MQTT thread — defer to main thread
-
+        }        
     }
 
     public static void Update()
@@ -91,10 +94,23 @@ public class UWBManager
         isUpdating = false;
     }
 
+    public static void AddToDebugMessage(string message, bool publishToMQTT = false, bool sendToConsole = true)
+    {
+        debugMessageOut += "\n" + message;
+        if (sendToConsole)
+        {
+            Console.WriteLine(message);
+        }
+        if (publishToMQTT)
+        {
+            _ = MQTTControl.PublishDebugMessage(debugMessageOut);
+        }
+    }
 
     private static void SendNetwork(UWB2GPSConverter.Network sendNetwork)
     {
-        Console.WriteLine($"Sending network with {sendNetwork.uwbs.Length}/{network.uwbs.Length} uwbs.");
+        AddToDebugMessage($"Sending network with {sendNetwork.uwbs.Length}/{network.uwbs.Length} uwbs.", true);
+
         string data = JsonSerializer.Serialize(sendNetwork, jsonOptions);
         _ = MQTTControl.Publish(data); // Fire and forget - don't await to avoid blocking
     }
