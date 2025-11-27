@@ -254,20 +254,29 @@ public class UWB2GPSConverter
 
         float totalError = 0;
         float total = 0;
+        float numEstimated = 0;
         foreach (UWB node in network.uwbs)
         {
-            if (!node.positionKnown && node.positionFoundThisPass)
+            if (!node.positionKnown)
             {
                 node.latLonAlt = WGS84Converter.LatLonAltEstimate(refPointLat, refPointLon, refPointAlt, refPos, node.position);
-                UWBManager.AddToDebugMessage($"Position triangulated for node {node.id} to {node.position}");
-                node.lastPositionUpdateTime = timeNow;
+                if (node.positionFoundThisPass)
+                {
+                    UWBManager.AddToDebugMessage($"Position triangulated for node {node.id} to {node.latLonAlt[0]}, {node.latLonAlt[1]}, {node.latLonAlt[2]}");
+                    node.lastPositionUpdateTime = timeNow;
+                }
+                else
+                {
+                    UWBManager.AddToDebugMessage($"Position estimated for node {node.id} to {node.latLonAlt[0]}, {node.latLonAlt[1]}, {node.latLonAlt[2]}");
+                    numEstimated++;
+                }
             }
             totalError += NodeError(node, network);
             total++;
         }
         total *= 0.5f;
 
-        string m = $"UWB to GPS conversion completed. Updated {totalNodesUpdated}/{totalNodes} positions. Average error: {totalError / total}m.";
+        string m = $"UWB to GPS conversion completed. Triangulated {totalNodesUpdated}/{totalNodes} positions. Estimated {numEstimated}/{totalNodes} positions. Average error: {totalError / total}m.";
         List<UWB> untriangulated = new List<UWB>();
         List<UWB> badTags = new List<UWB>();
         List<UWB> badAnchorsEdges = new List<UWB>();
